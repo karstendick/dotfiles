@@ -176,11 +176,6 @@ let Tlist_Display_Prototype = 1 " show prototypes instead of tags
 " mapping to open taglist
 nmap <F7> :TlistToggle<CR>
 
-" UltiSnips ------------------------------------------------------------------
-let g:UltiSnipsExpandTrigger="<tab>"
-let g:UltiSnipsJumpForwardTrigger="<tab>"
-let g:UltiSnipsJumpBackwardTrigger="<s-tab>"
-
 " VimClojure -----------------------------------------------------------------
 " notes on setup:
 "http://naleid.com/blog/2011/12/19/getting-a-clojure-repl-in-vim-with-vimclojure-nailgun-and-leiningen/

@@ -6,6 +6,8 @@ they do not start with a '.'. This is to make them non-hidden files.
 
 Forked from Buck's dotfiles: https://github.com/b-ryan/dotfiles
 
+Thanks also to: https://github.com/mathiasbynens/dotfiles
+
 ## Installation
 
 Just run
