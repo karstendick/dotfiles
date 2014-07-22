@@ -26,6 +26,9 @@ HISTFILESIZE=2000
 
 export EDITOR=vim
 
+# Add `~/bin` to the `$PATH`
+export PATH="$HOME/bin:$PATH";
+
 [ -r ~/.dircolors ] && DIRCOLORS=~/.dircolors
 eval "$(dircolors -b $DIRCOLORS)"
 
