@@ -44,3 +44,5 @@ if [ -z "$BASH_COMPLETION" ] && [ -f /etc/bash_completion ]; then
 fi
 
 export VIMCLOJURE_SERVER_JAR=~/lib/vimclojure/server-2.3.6.jar
+
+[ -n "$PS1" ] && source ~/.bash_profile;

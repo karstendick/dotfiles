@@ -50,7 +50,9 @@ symlink vimrc
 symlink gvimrc
 symlink bashrc
 symlink bash_ps1
+symlink bash_prompt
 symlink bash_aliases
+symlink bash_profile
 symlink inputrc
 
 [[ "$install_type" = "work" ]] && {
