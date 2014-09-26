@@ -43,6 +43,7 @@ mymkdir ~/bin
 mymkdir ~/.xmonad
 mymkdir ~/.config/pianobar
 mymkdir ~/.config/fish
+mymkdir ~/.lein
 mkfifo ~/.config/pianobar/ctl 2> /dev/null
 
 dirlink vim
@@ -74,5 +75,6 @@ symlink xmonad/xmonad.$install_type.hs ~/.xmonad/xmonad.hs
 
 symlink config/pianobar/config ~/.config/pianobar/config
 symlink config/fish/config.fish ~/.config/fish/config.fish
+symlink lein/profiles.clj ~/.lein/profiles.clj
 
 echo Backed up files to $BK_DIR
