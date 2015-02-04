@@ -28,6 +28,7 @@ export EDITOR=vim
 
 # Add `~/bin` to the `$PATH`
 export PATH="$HOME/bin:$PATH";
+export PATH="$PATH:/usr/lib/hadoop/bin";
 
 [ -r ~/.dircolors ] && DIRCOLORS=~/.dircolors
 eval "$(dircolors -b $DIRCOLORS)"
