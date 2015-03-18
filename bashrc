@@ -64,3 +64,4 @@ fi
 export GPG_TTY=$(tty)
 
 source ~/.lein/aws_creds.sh
+export PATH=$PATH:/opt/code/blackbox/bin
