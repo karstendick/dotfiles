@@ -101,3 +101,5 @@ gvim() {
 alias g=gvim
 
 alias gpg=gpg2
+
+alias e='ssh -A jkarstendick@echo.rjmetrics.com'
