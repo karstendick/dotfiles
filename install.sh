@@ -77,4 +77,6 @@ symlink config/pianobar/config ~/.config/pianobar/config
 symlink config/fish/config.fish ~/.config/fish/config.fish
 symlink lein/profiles.clj ~/.lein/profiles.clj
 
+symlink midje.clj
+
 echo Backed up files to $BK_DIR
