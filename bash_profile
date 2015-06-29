@@ -23,6 +23,8 @@ HISTFILESIZE=2000
 
 export EDITOR=vim
 export EMAIL=jkarstendick@rjmetrics.com
+export INSTALL_ENV=box
+export USERNAME=jkarstendick
 
 ## Add `~/bin` to the `$PATH`
 export PATH="$HOME/bin:$PATH";
