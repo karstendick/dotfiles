@@ -67,3 +67,5 @@ for file in ~/.{path,bash_prompt,exports,bash_aliases,functions,extra}; do
 done;
 unset file;
 
+cd /opt/code;
+
