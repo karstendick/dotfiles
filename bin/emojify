@@ -1,0 +1,21 @@
+#!/bin/bash
+# Emjoify an image!
+# (currently supports mac and linux)
+# from Mark Koh
+
+if [ "$1" != "" ]; then
+    extension="${1##*.}"
+    filename="${1%.*}"
+    resized="${filename}_emoji.${extension}"
+    echo "Emojifying $1 to $resized"
+
+    if [ -e /usr/bin/convert ]; then 
+        # Use convert (linux)
+        convert "$1" -resize 128x128 "$resized"
+    elif [ -e /usr/bin/sips ]; then
+        # Use sips (mac)
+        sips -Z 128 --out "$resized" "$1"
+    else
+        echo "I'm sorry, your operating system doesn't support this tool."
+    fi
+fi
