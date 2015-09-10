@@ -102,4 +102,7 @@ alias g=gvim
 
 alias gpg=gpg2
 
+# this is the opposite of `workon`
+alias workoff=deactivate
+
 alias e='ssh -A jkarstendick@echo.rjmetrics.com'
