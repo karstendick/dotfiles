@@ -56,7 +56,7 @@ if [ -f "${GPG_AGENT_INFO_FILE}" ]; then
 fi
 export GPG_TTY=$(tty)
 
-source ~/.lein/aws_creds.sh
+source ~/aws_creds.sh
 export PATH=$PATH:/opt/code/blackbox/bin
 
 # Load the shell dotfiles, and then some:
@@ -67,5 +67,5 @@ for file in ~/.{path,bash_prompt,exports,bash_aliases,functions,extra}; do
 done;
 unset file;
 
-cd /opt/code;
+cd ~/boxcutter;
 
