@@ -56,6 +56,8 @@ if [ -f "${GPG_AGENT_INFO_FILE}" ]; then
 fi
 export GPG_TTY=$(tty)
 
+export RJM_VM_MEMORY=8192
+
 source ~/aws_creds.sh
 export PATH=$PATH:/opt/code/blackbox/bin
 
