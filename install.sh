@@ -40,21 +40,17 @@ dirlink() {
 }
 
 mymkdir ~/bin
-mymkdir ~/.xmonad
-mymkdir ~/.config/pianobar
-mymkdir ~/.config/fish
 mymkdir ~/.lein
-mkfifo ~/.config/pianobar/ctl 2> /dev/null
 
-dirlink vim
-symlink vimrc
-symlink gvimrc
-symlink bashrc
+# dirlink vim
+# symlink vimrc
+# symlink gvimrc
+# symlink bashrc
 symlink bash_ps1
 symlink bash_prompt
 symlink bash_aliases
 symlink bash_profile
-symlink inputrc
+# symlink inputrc
 
 [[ "$install_type" = "work" ]] && {
     gitconfig=gitconfig.work 
@@ -63,18 +59,12 @@ symlink inputrc
 }
 symlink $gitconfig ~/.gitconfig
 symlink gitignore
-symlink hgrc
+# symlink hgrc
 
 for file in $(ls bin); do
     symlink bin/$file ~/bin/$file
 done
 
-symlink xmobarrc
-
-symlink xmonad/xmonad.$install_type.hs ~/.xmonad/xmonad.hs
-
-symlink config/pianobar/config ~/.config/pianobar/config
-symlink config/fish/config.fish ~/.config/fish/config.fish
 symlink lein/profiles.clj ~/.lein/profiles.clj
 
 symlink midje.clj
