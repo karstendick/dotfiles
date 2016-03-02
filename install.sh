@@ -42,7 +42,6 @@ dirlink() {
 mymkdir ~/bin
 mymkdir ~/.lein
 
-symlink bash_ps1
 symlink bash_prompt
 symlink bash_aliases
 symlink bash_profile
