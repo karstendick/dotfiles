@@ -33,8 +33,8 @@ export PATH="$PATH:/usr/lib/hadoop/bin";
 [ -r ~/.dircolors ] && DIRCOLORS=~/.dircolors
 eval "$(dircolors -b $DIRCOLORS)"
 
-bind '"\C-p": history-search-backward'
-bind '"\C-n": history-search-forward'
+# bind '"\C-p": history-search-backward'
+# bind '"\C-n": history-search-forward'
 
 ## enable programmable completion features (you don't need to enable
 ## this, if it's already enabled in /etc/bash.bashrc and /etc/profile
