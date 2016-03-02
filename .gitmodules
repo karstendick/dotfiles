@@ -1,3 +1,0 @@
-[submodule "vim/bundle/fish"]
-	path = vim/bundle/fish
-	url = https://github.com/aliva/vim-fish.git
