@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ### can be default, work, or necromancer
-install_type=${1:-default}
+install_type=${1:-work}
 
 LINK_FLAGS="--symbolic"
 DIR_LINK_FLAGS="${LINK_FLAGS} --no-dereference"
@@ -42,15 +42,10 @@ dirlink() {
 mymkdir ~/bin
 mymkdir ~/.lein
 
-# dirlink vim
-# symlink vimrc
-# symlink gvimrc
-# symlink bashrc
 symlink bash_ps1
 symlink bash_prompt
 symlink bash_aliases
 symlink bash_profile
-# symlink inputrc
 
 [[ "$install_type" = "work" ]] && {
     gitconfig=gitconfig.work 
@@ -59,14 +54,12 @@ symlink bash_profile
 }
 symlink $gitconfig ~/.gitconfig
 symlink gitignore
-# symlink hgrc
 
 for file in $(ls bin); do
     symlink bin/$file ~/bin/$file
 done
 
 symlink lein/profiles.clj ~/.lein/profiles.clj
-
 symlink midje.clj
 
 echo Backed up files to $BK_DIR

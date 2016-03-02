@@ -29,19 +29,8 @@ export USERNAME=jkarstendick
 ## Add `~/bin` to the `$PATH`
 export PATH="$HOME/bin:$PATH";
 export PATH="$PATH:/usr/lib/hadoop/bin";
+export PATH=$PATH:/opt/code/blackbox/bin
 
-[ -r ~/.dircolors ] && DIRCOLORS=~/.dircolors
-eval "$(dircolors -b $DIRCOLORS)"
-
-# bind '"\C-p": history-search-backward'
-# bind '"\C-n": history-search-forward'
-
-## enable programmable completion features (you don't need to enable
-## this, if it's already enabled in /etc/bash.bashrc and /etc/profile
-## sources /etc/bash.bashrc).
-if [ -z "$BASH_COMPLETION" ] && [ -f /etc/bash_completion ]; then
-    . /etc/bash_completion
-fi
 
 export GPG_AGENT_INFO_FILE=$HOME/.gpg-agent-info
 gpg-agent --daemon --write-env-file "${GPG_AGENT_INFO_FILE}"
@@ -54,11 +43,9 @@ if [ -f "${GPG_AGENT_INFO_FILE}" ]; then
 fi
 export GPG_TTY=$(tty)
 
-export PATH=$PATH:/opt/code/blackbox/bin
 
 # Load the shell dotfiles, and then some:
 for file in ~/.{bash_prompt,bash_aliases}; do
     [ -r "$file" ] && [ -f "$file" ] && source "$file";
 done;
 unset file;
-
