@@ -33,7 +33,7 @@ export PATH=$PATH:/opt/code/blackbox/bin
 
 
 export GPG_AGENT_INFO_FILE=$HOME/.gpg-agent-info
-gpg-agent --daemon --write-env-file "${GPG_AGENT_INFO_FILE}"
+gpg-agent --daemon --write-env-file "${GPG_AGENT_INFO_FILE}" > /dev/null
 
 if [ -f "${GPG_AGENT_INFO_FILE}" ]; then
     . "${GPG_AGENT_INFO_FILE}"
