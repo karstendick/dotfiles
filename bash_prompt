@@ -7,13 +7,12 @@ elif infocmp xterm-256color >/dev/null 2>&1; then
 fi;
 
 aws_role_name() {
-    if [[ -n $AWS_ROLE_NAME ]]
-    then
-        tput setaf 1
-        echo
-        echo -n "{$AWS_ROLE_NAME}"
-        tput sgr0
-    fi
+	if [[ -n $AWS_ROLE_NAME ]]; then
+		tput setaf 1
+		echo
+		echo -n "{$AWS_ROLE_NAME}"
+		tput sgr0
+	fi;
 }
 
 prompt_git() {
