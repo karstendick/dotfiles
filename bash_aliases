@@ -1,5 +1,5 @@
 #!/bin/bash
-alias ls='ls -G' #-color=auto'
+alias ls='ls -G'
 
 # grep aliases
 alias grep='grep --color=auto'
