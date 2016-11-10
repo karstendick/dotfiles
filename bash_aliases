@@ -100,3 +100,7 @@ alias gpg=gpg2
 alias workoff=deactivate
 
 alias e='ssh -A jkarstendick@echo.rjmetrics.com'
+
+# tmux aliases from github.com/stitchdata/ide
+alias t=tmux
+alias tl='t ls'
