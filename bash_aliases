@@ -59,8 +59,6 @@ alias lh='ls -a | egrep "^\."' # ONLY show hidden files
 
 # git aliases
 alias gist="git status -s"
-alias c-="git checkout -"
-alias b="git for-each-ref --sort=-committerdate refs/heads/"
 alias giff="git diff --color-words --ignore-space-change"
 short() { N=${1:-1}; git log -n $N --first-parent; }
 long() { git log --first-parent; }
