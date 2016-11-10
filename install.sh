@@ -46,6 +46,8 @@ symlink bash_prompt
 symlink bash_aliases
 symlink bash_profile
 
+symlink tmux.conf
+
 [[ "$install_type" = "work" ]] && {
     gitconfig=gitconfig.work 
 } || {
