@@ -52,3 +52,4 @@ for file in ~/.{bash_prompt,bash_aliases}; do
 done;
 unset file;
 
+source ~/bin/tmux.bash
