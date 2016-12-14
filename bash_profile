@@ -58,6 +58,7 @@ done;
 for file in ~/git/ide/bash/bin/*; do
     ln -s "$file" ~/bin;
 done;
+ln -s ~/git/ide/bash/tmux.conf ~/tmux.conf
 unset file;
 
 source ~/bin/tmux.bash
