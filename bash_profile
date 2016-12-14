@@ -48,6 +48,16 @@ export GPG_TTY=$(tty)
 for file in ~/.{bash_prompt,bash_aliases}; do
     [ -r "$file" ] && [ -f "$file" ] && source "$file";
 done;
+# Load the stitchdata/ide goodies:
+for file in ~/git/ide/bash/functions/*; do
+    [ -r "$file" ] && [ -f "$file" ] && source "$file";
+done;
+for file in ~/git/ide/bash/aliases/*; do
+    [ -r "$file" ] && [ -f "$file" ] && source "$file";
+done;
+for file in ~/git/ide/bash/bin/*; do
+    ln -s "$file" ~/bin;
+done;
 unset file;
 
 source ~/bin/tmux.bash
