@@ -1,10 +1,7 @@
 #!/bin/bash
 
-### can be default, work, or necromancer
-install_type=${1:-work}
-
-LINK_FLAGS="-s" #-symbolic"
-DIR_LINK_FLAGS="${LINK_FLAGS} -n" #-no-dereference"
+LINK_FLAGS="-s"
+DIR_LINK_FLAGS="${LINK_FLAGS} -n"
 
 mymkdir() {
     mkdir -p $1 2> /dev/null || true
@@ -48,12 +45,7 @@ symlink bash_profile
 
 symlink tmux.conf
 
-[[ "$install_type" = "work" ]] && {
-    gitconfig=gitconfig.work 
-} || {
-    gitconfig=gitconfig.default
-}
-symlink $gitconfig ~/.gitconfig
+symlink gitconfig
 symlink gitignore
 
 for file in $(ls bin); do

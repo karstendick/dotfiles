@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-
-ssh -A jkarstendick@echo.rjmetrics.com
-

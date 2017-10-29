@@ -27,11 +27,10 @@ export EMAIL=joshdick@gmail.com
 ## Add `~/bin` to the `$PATH`
 export PATH="$HOME/bin:$PATH";
 
-source ~/aws_creds.sh
-
 # Load the shell dotfiles, and then some:
 for file in ~/.{bash_prompt,bash_aliases}; do
     [ -r "$file" ] && [ -f "$file" ] && source "$file";
+    echo "Sourcing $file"
 done;
 # Load the stitchdata/ide goodies:
 for file in ~/git/ide/bash/functions/*; do
