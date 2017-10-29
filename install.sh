@@ -3,8 +3,8 @@
 ### can be default, work, or necromancer
 install_type=${1:-work}
 
-LINK_FLAGS="--symbolic"
-DIR_LINK_FLAGS="${LINK_FLAGS} --no-dereference"
+LINK_FLAGS="-s" #-symbolic"
+DIR_LINK_FLAGS="${LINK_FLAGS} -n" #-no-dereference"
 
 mymkdir() {
     mkdir -p $1 2> /dev/null || true

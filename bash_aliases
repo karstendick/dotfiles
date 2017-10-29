@@ -1,5 +1,5 @@
 #!/bin/bash
-alias ls='ls --color=auto'
+alias ls='ls -G'
 
 # grep aliases
 alias grep='grep --color=auto'
@@ -98,8 +98,6 @@ alias gpg=gpg2
 
 # this is the opposite of `workon`
 alias workoff=deactivate
-
-alias e='ssh -A jkarstendick@echo.rjmetrics.com'
 
 # tmux aliases from github.com/stitchdata/ide
 alias t=tmux
