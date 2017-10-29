@@ -99,8 +99,6 @@ alias gpg=gpg2
 # this is the opposite of `workon`
 alias workoff=deactivate
 
-alias e='ssh -A jkarstendick@echo.rjmetrics.com'
-
 # tmux aliases from github.com/stitchdata/ide
 alias t=tmux
 alias tl='t ls'
