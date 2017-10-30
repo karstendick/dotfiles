@@ -23,3 +23,5 @@ alias du='du -h'
 
 alias t=tmux
 alias tl='t ls'
+
+alias emacs='emacs -nw'
