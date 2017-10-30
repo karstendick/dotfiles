@@ -27,6 +27,10 @@ export EMAIL=joshdick@gmail.com
 ## Add `~/bin` to the `$PATH`
 export PATH="$HOME/bin:$PATH";
 
+## Add go stuff
+export GOPATH="$HOME/go";
+export GOBIN="$GOPATH/bin";
+
 # Load the shell dotfiles, and then some:
 for file in ~/.{bash_prompt,bash_aliases}; do
     [ -r "$file" ] && [ -f "$file" ] && source "$file";
