@@ -30,19 +30,9 @@ export PATH="$HOME/bin:$PATH";
 # Load the shell dotfiles, and then some:
 for file in ~/.{bash_prompt,bash_aliases}; do
     [ -r "$file" ] && [ -f "$file" ] && source "$file";
-    echo "Sourcing $file"
 done;
-# Load the stitchdata/ide goodies:
-for file in ~/git/ide/bash/functions/*; do
-    [ -r "$file" ] && [ -f "$file" ] && source "$file";
-done;
-for file in ~/git/ide/bash/aliases/*; do
-    [ -r "$file" ] && [ -f "$file" ] && source "$file";
-done;
-for file in ~/git/ide/bash/bin/*; do
-    ln -s "$file" ~/bin;
-done;
-ln -s ~/git/ide/bash/tmux.conf ~/tmux.conf
 unset file;
+
+[ -f ~/tmux.conf ] && ln -s ~/git/ide/bash/tmux.conf ~/tmux.conf
 
 source ~/bin/tmux.bash
