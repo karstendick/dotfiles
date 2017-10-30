@@ -33,4 +33,6 @@ for file in ~/.{bash_prompt,bash_aliases}; do
 done;
 unset file;
 
+[ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
+
 source ~/bin/tmux.bash

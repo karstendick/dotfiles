@@ -17,5 +17,9 @@ alias ping="ping -c 4" # stop after 4 packets
 # this is the opposite of `workon`
 alias workoff=deactivate
 
+# human-readable output
+alias df='df -h'
+alias du='du -h'
+
 alias t=tmux
 alias tl='t ls'
