@@ -33,6 +33,4 @@ for file in ~/.{bash_prompt,bash_aliases}; do
 done;
 unset file;
 
-[ -f ~/tmux.conf ] && ln -s ~/git/ide/bash/tmux.conf ~/tmux.conf
-
 source ~/bin/tmux.bash
