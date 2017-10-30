@@ -1,6 +1,6 @@
 [user]
 name = Joshua Karstendick
-email = jkarstendick@rjmetrics.com
+email = joshdick@gmail.com
 
 [color]
 branch = auto
@@ -23,21 +23,22 @@ added = yellow
 changed = green
 untracked = cyan
 
+# Try to keep this in sync with Bash-it (https://github.com/Bash-it/bash-it/blob/master/aliases/available/git.aliases.bash)
+# in case I ever switch to that.
+# The approach here is to abbreviate common git commands,
+# not invent a new vocabulary
 [alias]
+st = status
+co = checkout
+dfc = diff --cached
+count = git shortlog -sn
+ls = log --pretty=format:"%C(yellow)%h%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate
 log1 = log --graph --all --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%cr)%C(reset) %C(white)%s%C(reset) %C(bold white)- %cn%C(reset)%C(bold yellow)%d%C(reset)' --abbrev-commit --date=relative
 log2 = log --graph --all --format=format:'%C(bold blue)%h%C(reset) - %C(bold cyan)%cD%C(reset) %C(bold green)(%cr)%C(reset)%C(bold yellow)%d%C(reset)%n''          %C(white)%s%C(reset) %C(bold white)- %cn%C(reset)' --abbrev-commit
-br = rev-parse --abbrev-ref HEAD
-ci = commit -a
-
-[difftool "meld"]
-path = /usr/bin/meld
-
-[mergetool "meld"]
-path = /usr/bin/meld
 
 [core]
 excludesfile = ~/.gitignore
-editor = vim
+editor = emacs
 
 [push]
 default = upstream
