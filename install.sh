@@ -55,4 +55,6 @@ done
 symlink lein/profiles.clj ~/.lein/profiles.clj
 symlink midje.clj
 
+symlink editrc
+
 echo Backed up files to $BK_DIR
