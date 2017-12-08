@@ -30,6 +30,7 @@ export PATH="$HOME/bin:$PATH";
 ## Add go stuff
 export GOPATH="$HOME/go";
 export GOBIN="$GOPATH/bin";
+export PATH="$GOBIN:$PATH";
 
 # Load the shell dotfiles, and then some:
 for file in ~/.{bash_prompt,bash_aliases}; do
