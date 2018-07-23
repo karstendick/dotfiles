@@ -59,4 +59,8 @@ symlink editrc
 
 symlink cntlm.conf /usr/local/etc/cntlm.conf
 
+mymkdir ~/.config/
+mymkdir ~/.config/pip/
+symlink pip.conf ~/.config/pip/pip.conf
+
 echo Backed up files to $BK_DIR
