@@ -57,4 +57,6 @@ symlink midje.clj
 
 symlink editrc
 
+symlink cntlm.conf /usr/local/etc/cntlm.conf
+
 echo Backed up files to $BK_DIR

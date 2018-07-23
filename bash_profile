@@ -46,3 +46,13 @@ unset file;
 [ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
 
 source ~/bin/tmux.bash
+export PATH="/usr/local/opt/postgresql@9.6/bin:$PATH"
+
+eval "$(pyenv init -)"
+
+export http_proxy=http://localhost:3333
+export https_proxy=$http_proxy
+export HTTP_PROXY=$http_proxy
+export HTTPS_PROXY=$http_proxy
+export FTP_PROXY=$http_proxy
+export SOCKS_PROXY=$http_proxy
