@@ -45,6 +45,26 @@ unset file;
 
 [ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
 
+function proxy-set {
+	export http_proxy=http://localhost:3333
+	export https_proxy=$http_proxy
+	export HTTP_PROXY=$http_proxy
+	export HTTPS_PROXY=$http_proxy
+	export FTP_PROXY=$http_proxy
+	export SOCKS_PROXY=$http_proxy
+	export NO_PROXY="localhost,127.0.0.1"
+}
+
+function proxy-clear {
+	unset http_proxy
+	unset https_proxy
+	unset HTTP_PROXY
+	unset HTTPS_PROXY
+	unset FTP_PROXY
+	unset SOCKS_PROXY
+	unset NO_PROXY
+}
+
 source ~/bin/tmux.bash
 export PATH="/usr/local/opt/postgresql@9.6/bin:$PATH"
 export PATH="/usr/local/opt/mongodb@3.4/bin:$PATH"
