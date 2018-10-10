@@ -25,3 +25,5 @@ alias t=tmux
 alias tl='t ls'
 
 alias emacs='emacs -nw'
+
+alias tf='terraform'
