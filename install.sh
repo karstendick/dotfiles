@@ -63,4 +63,7 @@ mymkdir ~/.config/
 mymkdir ~/.config/pip/
 symlink pip.conf ~/.config/pip/pip.conf
 
+# Suppress "Last login" in new terminal windows
+symlink hushlogin
+
 echo Backed up files to $BK_DIR
