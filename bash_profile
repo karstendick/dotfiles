@@ -69,4 +69,7 @@ source ~/bin/tmux.bash
 export PATH="/usr/local/opt/postgresql@9.6/bin:$PATH"
 export PATH="/usr/local/opt/mongodb@3.4/bin:$PATH"
 
+# Use GNU versions of utilities, such as `sed`
+PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
+
 eval "$(pyenv init -)"
