@@ -72,4 +72,7 @@ export PATH="/usr/local/opt/mongodb@3.4/bin:$PATH"
 # Use GNU versions of utilities, such as `sed`
 PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
 
+# To use python tools like virtualenv
+PATH="$HOME/Library/Python/2.7/bin:$PATH"
+
 eval "$(pyenv init -)"
