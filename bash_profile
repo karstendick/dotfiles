@@ -74,5 +74,18 @@ PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
 
 # To use python tools like virtualenv
 PATH="$HOME/Library/Python/2.7/bin:$PATH"
-
 eval "$(pyenv init -)"
+
+# Suppress Apple's message trying to get me to use zsh
+export BASH_SILENCE_DEPRECATION_WARNING=1
+
+# From Deliverr's dev-setup
+export PATH="/Applications/Visual Studio Code.app/Contents/Resources/app/bin:$PATH"
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+export ENABLE_TEST_LOGS=true
