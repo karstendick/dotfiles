@@ -89,3 +89,5 @@ NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 export ENABLE_TEST_LOGS=true
+export PATH="/usr/local/opt/mysql@5.7/bin:$PATH"
+export PIPENV_VERBOSITY=-1
