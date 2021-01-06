@@ -91,3 +91,6 @@ NVM_DIR="$HOME/.nvm"
 export ENABLE_TEST_LOGS=true
 export PATH="/usr/local/opt/mysql@5.7/bin:$PATH"
 export PIPENV_VERBOSITY=-1
+
+# added by Snowflake SnowSQL installer v1.2
+export PATH=/Applications/SnowSQL.app/Contents/MacOS:$PATH
