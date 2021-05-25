@@ -40,6 +40,9 @@ log2 = log --graph --all --format=format:'%C(bold blue)%h%C(reset) - %C(bold cya
 excludesfile = ~/.gitignore
 editor = emacs
 
+[pull]
+rebase = false
+
 [push]
 default = upstream
 
