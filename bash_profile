@@ -94,3 +94,6 @@ export PIPENV_VERBOSITY=-1
 
 # added by Snowflake SnowSQL installer v1.2
 export PATH=/Applications/SnowSQL.app/Contents/MacOS:$PATH
+
+# Put brew in the $PATH
+eval "$(/opt/homebrew/bin/brew shellenv)"
