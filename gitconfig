@@ -45,6 +45,7 @@ rebase = false
 
 [push]
 default = upstream
-
-[url "git@github.com:"]
-insteadOf = https://github.com/
+[credential]
+	helper = /usr/local/share/gcm-core/git-credential-manager
+[credential "https://dev.azure.com"]
+	useHttpPath = true
