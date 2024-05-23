@@ -72,6 +72,9 @@ export PATH="/usr/local/opt/mongodb@3.4/bin:$PATH"
 # Use GNU versions of utilities, such as `sed`
 PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
 
+# Put brew in the $PATH
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
 # To use python tools like virtualenv
 PATH="$HOME/Library/Python/2.7/bin:$PATH"
 eval "$(pyenv init -)"
@@ -91,6 +94,3 @@ NVM_DIR="$HOME/.nvm"
 export ENABLE_TEST_LOGS=true
 export PATH="/usr/local/opt/mysql@5.7/bin:$PATH"
 export PIPENV_VERBOSITY=-1
-
-# Put brew in the $PATH
-eval "$(/opt/homebrew/bin/brew shellenv)"
