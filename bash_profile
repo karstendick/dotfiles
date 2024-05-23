@@ -93,4 +93,4 @@ export PATH="/usr/local/opt/mysql@5.7/bin:$PATH"
 export PIPENV_VERBOSITY=-1
 
 # Put brew in the $PATH
-eval "$(brew shellenv)"
+eval "$(/opt/homebrew/bin/brew shellenv)"
