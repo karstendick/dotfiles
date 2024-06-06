@@ -45,3 +45,4 @@ rebase = false
 
 [push]
 default = upstream
+autoSetupRemote = true
