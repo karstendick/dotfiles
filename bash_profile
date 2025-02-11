@@ -66,8 +66,6 @@ function proxy-clear {
 }
 
 source ~/bin/tmux.bash
-export PATH="/usr/local/opt/postgresql@9.6/bin:$PATH"
-export PATH="/usr/local/opt/mongodb@3.4/bin:$PATH"
 
 # Use GNU versions of utilities, such as `sed`
 PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
@@ -75,24 +73,14 @@ PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
 # Put brew in the $PATH
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
-# To use python tools like virtualenv
-PATH="$HOME/Library/Python/2.7/bin:$PATH"
-eval "$(pyenv init -)"
-
 # Suppress Apple's message trying to get me to use zsh
 export BASH_SILENCE_DEPRECATION_WARNING=1
-
-# From Deliverr's dev-setup
-export PATH="/Applications/Visual Studio Code.app/Contents/Resources/app/bin:$PATH"
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
 export ENABLE_TEST_LOGS=true
-export PATH="/usr/local/opt/mysql@5.7/bin:$PATH"
 export PIPENV_VERBOSITY=-1
 
 # To put brew's python on your path
