@@ -83,5 +83,8 @@ export NVM_DIR="$HOME/.nvm"
 export ENABLE_TEST_LOGS=true
 export PIPENV_VERBOSITY=-1
 
-# To put brew's python on your path
+# To put brew's python and pnpm on the $PATH
 export PATH="/opt/homebrew/opt/python@3.12/libexec/bin:$PATH"
+export PATH="/opt/homebrew/opt/pnpm@9/bin:$PATH"
+# Needed for pipx
+export PATH="$HOME/.local/bin:$PATH"
