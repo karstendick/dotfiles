@@ -32,10 +32,8 @@ export GOPATH="$HOME/go";
 export GOBIN="$GOPATH/bin";
 export PATH="$GOBIN:$PATH";
 
-## AWS stuff
-#export AWS_REGION=us-east-1
-#export AWS_ACCESS_KEY_ID=`aws configure get default.aws_access_key_id`
-#export AWS_SECRET_ACCESS_KEY=`aws configure get default.aws_secret_access_key`
+## AWS stuff for Augment
+export AWS_DEFAULT_PROFILE=PowerUserAccess-908027377227
 
 # Load the shell dotfiles, and then some:
 for file in ~/.{bash_prompt,bash_aliases}; do
