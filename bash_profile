@@ -81,8 +81,21 @@ export NVM_DIR="$HOME/.nvm"
 export ENABLE_TEST_LOGS=true
 export PIPENV_VERBOSITY=-1
 
+export PATH="/opt/homebrew/opt/mysql-client@8.0/bin:$PATH"
 # To put brew's python and pnpm on the $PATH
 export PATH="/opt/homebrew/opt/python@3.12/libexec/bin:$PATH"
 export PATH="/opt/homebrew/opt/pnpm@9/bin:$PATH"
 # Needed for pipx
 export PATH="$HOME/.local/bin:$PATH"
+export PATH="/opt/homebrew/opt/pnpm@9/bin:$PATH"
+
+export AWS_PROFILE=dev
+export AWS_DEFAULT_PROFILE=dev
+
+# Claude Code using AWS Bedrock
+# See: https://builder.aws.com/content/2tXkZKrZzlrlu0KfH8gST5Dkppq/claude-code-on-amazon-bedrock-quick-setup-guide
+export CLAUDE_CODE_USE_BEDROCK=1
+export ANTHROPIC_MODEL='us.anthropic.claude-opus-4-20250514-v1:0'
+# Recommended starting point for Claude 4 models on Bedrock
+export CLAUDE_CODE_MAX_OUTPUT_TOKENS=4096
+export MAX_THINKING_TOKENS=1024
