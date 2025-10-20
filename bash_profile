@@ -32,9 +32,6 @@ export GOPATH="$HOME/go";
 export GOBIN="$GOPATH/bin";
 export PATH="$GOBIN:$PATH";
 
-## AWS stuff for Augment
-export AWS_DEFAULT_PROFILE=PowerUserAccess-908027377227
-
 # Load the shell dotfiles, and then some:
 for file in ~/.{bash_prompt,bash_aliases}; do
     [ -r "$file" ] && [ -f "$file" ] && source "$file";
@@ -89,14 +86,3 @@ export PATH="/opt/homebrew/opt/pnpm@9/bin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="/opt/homebrew/opt/mysql-client@8.0/bin:$PATH"
 export PATH="/opt/homebrew/opt/pnpm@9/bin:$PATH"
-
-export AWS_PROFILE=dev
-export AWS_DEFAULT_PROFILE=dev
-
-# Claude Code using AWS Bedrock
-# See: https://builder.aws.com/content/2tXkZKrZzlrlu0KfH8gST5Dkppq/claude-code-on-amazon-bedrock-quick-setup-guide
-export CLAUDE_CODE_USE_BEDROCK=1
-export ANTHROPIC_MODEL='us.anthropic.claude-sonnet-4-5-20250929-v1:0'
-# Recommended starting point for Claude 4 models on Bedrock
-export CLAUDE_CODE_MAX_OUTPUT_TOKENS=4096
-export MAX_THINKING_TOKENS=1024
