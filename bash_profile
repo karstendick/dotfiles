@@ -87,6 +87,7 @@ export PATH="/opt/homebrew/opt/python@3.12/libexec/bin:$PATH"
 export PATH="/opt/homebrew/opt/pnpm@9/bin:$PATH"
 # Needed for pipx
 export PATH="$HOME/.local/bin:$PATH"
+export PATH="/opt/homebrew/opt/mysql-client@8.0/bin:$PATH"
 export PATH="/opt/homebrew/opt/pnpm@9/bin:$PATH"
 
 export AWS_PROFILE=dev
