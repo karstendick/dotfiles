@@ -63,6 +63,9 @@ mymkdir ~/.config/
 mymkdir ~/.config/pip/
 symlink pip.conf ~/.config/pip/pip.conf
 
+mymkdir ~/.claude
+symlink claude/settings.json ~/.claude/settings.json
+
 # Suppress "Last login" in new terminal windows
 symlink hushlogin
 
