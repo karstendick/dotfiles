@@ -95,6 +95,8 @@ fi
 export ENABLE_TEST_LOGS=true
 export PIPENV_VERBOSITY=-1
 
+export AWS_PROFILE=agi-dev
+
 export PATH="/opt/homebrew/opt/mysql-client@8.0/bin:$PATH"
 # To put brew's python and pnpm on the $PATH
 export PATH="/opt/homebrew/opt/python@3.12/libexec/bin:$PATH"
