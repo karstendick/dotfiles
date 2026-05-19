@@ -2,7 +2,14 @@
   "permissions": {
     "allow": [
       "WebSearch",
-      "WebFetch"
+      "WebFetch",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr diff:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh pr status:*)",
+      "Bash(gh api repos/*/pulls/*/comments:*)",
+      "Bash(gh api repos/*/pulls/*/reviews:*)"
     ],
     "defaultMode": "acceptEdits"
   },
