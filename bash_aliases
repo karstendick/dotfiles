@@ -27,3 +27,5 @@ alias tl='t ls'
 alias emacs='emacs -nw'
 
 alias tf='terraform'
+
+alias psqllocal='psql "${DATABASE_URL%%\?*}"'
