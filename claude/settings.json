@@ -9,9 +9,37 @@
       "Bash(gh pr checks:*)",
       "Bash(gh pr status:*)",
       "Bash(gh api repos/*/pulls/*/comments:*)",
-      "Bash(gh api repos/*/pulls/*/reviews:*)"
+      "Bash(gh api repos/*/pulls/*/reviews:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run watch:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(yarn tsc:*)",
+      "Bash(yarn cdk synth:*)",
+      "Bash(yarn cdk diff:*)",
+      "Bash(yarn cdk list:*)",
+      "Bash(npx tsc --noEmit:*)",
+      "Bash(yarn prisma validate:*)",
+      "Edit",
+      "Write",
+      "NotebookEdit"
     ],
     "defaultMode": "acceptEdits"
   },
-  "theme": "dark"
+  "theme": "dark",
+  "hooks": {
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "msg=$(jq -r '.message'); /opt/homebrew/bin/terminal-notifier -title 'Claude Code' -message \"$msg\" -sender com.apple.Terminal -sound Glass"
+          }
+        ]
+      }
+    ]
+  }
 }
