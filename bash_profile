@@ -40,9 +40,6 @@ unset file;
 
 source ~/bin/tmux.bash
 
-# Use GNU versions of utilities, such as `sed`
-PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
-
 # Put brew in the $PATH
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
