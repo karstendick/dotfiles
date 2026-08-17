@@ -57,8 +57,6 @@ symlink midje.clj
 
 symlink editrc
 
-symlink cntlm.conf /usr/local/etc/cntlm.conf
-
 mymkdir ~/.config/
 mymkdir ~/.config/pip/
 symlink pip.conf ~/.config/pip/pip.conf
