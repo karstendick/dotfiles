@@ -9,20 +9,18 @@ function new_tmux_session {
         return 1
     fi
 
-    local default_command="which reattach-to-user-namespace > /dev/null 2>&1 && reattach-to-user-namespace -l bash || bash"
-
     (
         cd $HOME
 
-        # tmux -vvvv new-session -d -s $session_name -n editor "$default_command" # for debugging
-        tmux new-session -d -s $session_name -n editor "$default_command"
+        # No command argument: tmux runs $SHELL as a login shell, so ~/.bash_profile is sourced.
+        # tmux -vvvv new-session -d -s $session_name -n editor # for debugging
+        tmux new-session -d -s $session_name -n editor
         if [[ Darwin = $(uname) ]]
         then
             tmux send-keys 'emacs' 'C-m'
         else
             tmux send-keys 'TERM=xterm-256color emacs' 'C-m'
         fi
-        tmux set-option -g default-command "$default_command"
         tmux new-window -t $session_name -n admin
         tmux new-window -t $session_name -n services
         tmux new-window -t $session_name -n db

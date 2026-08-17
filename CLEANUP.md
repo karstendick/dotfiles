@@ -127,12 +127,39 @@ These are "do you still use this?" questions, not defects. Left alone pending a 
   `GOPATH`/`GOBIN` unset, 153 completions, and **no** nonexistent `PATH` entries from this repo —
   the only ones left are Apple's own `cryptexd` bootstrap paths.
 
-- [ ] **tmux.** `tmux` is not installed, but `tmux.conf`, `bin/tmux.bash`, and the `t` / `tl`
-      aliases remain. If you keep them, two latent bugs to fix first:
-  - `tmux.conf:62` — `set -g status-utf8 on` was **removed in tmux 2.2** and errors on modern versions
-  - `tmux.conf:65` — status line calls `loadavg`, which isn't installed
-  - (`reattach-to-user-namespace`, used in `tmux.conf:10` and `bin/tmux.bash:12`, is also not
-    installed — though both call sites already guard for its absence)
+- [x] **tmux — keeping it; installed and config modernized.** `brew install tmux` → 3.7b. The
+      config dated from tmux 1.x and had accumulated five problems, all now fixed:
+  - **`status-utf8` removed.** `set -g status-utf8 on` was deleted from tmux in 2.2 and errors on
+    load. UTF-8 is unconditional now.
+  - **`loadavg` replaced.** The status line called `#(loadavg)`, a command that doesn't exist here
+    and isn't in Homebrew. Now `#(uptime | sed 's/.*load averages*: //')` — the `s*` makes it match
+    both macOS ("load averages:") and Linux ("load average:").
+  - **`reattach-to-user-namespace` dropped** from `tmux.conf` and `bin/tmux.bash`. tmux has handled
+    pasteboard access natively since 2.6 (2017). Note `bind y` called it **unguarded**, so
+    prefix-y would have silently failed to copy; it's now a plain `pbcopy` pipe.
+  - **`default-command` removed entirely, not just unwrapped.** Setting it at all makes tmux run a
+    **non-login** shell, which skips `~/.bash_profile` — no aliases, no completions in panes.
+    Unset means tmux runs `$SHELL` as a login shell. Same fix applied in `bin/tmux.bash`, which was
+    both passing it to `new-session` and re-setting it globally.
+  - **Keybinding conflict fixed.** `bind ] send-prefix` (line 7) was overridden by
+    `bind ] paste-buffer` (line 34), so send-prefix didn't work at all — you couldn't type a
+    literal `C-]`. Moved to `bind a send-prefix`, matching screen's `C-a a`. This was a
+    long-standing bug, unrelated to tmux versions.
+  - Also modernized `default-terminal` from `screen-256color` to `tmux-256color` (better color and
+    italics support; verified present in terminfo).
+
+  Verified by starting a throwaway tmux server on its own socket with this config: loads with
+  **zero errors**, `default-terminal` resolves to `tmux-256color`, bindings are as intended
+  (`a` → send-prefix, `]` → paste-buffer, `C-]` → last-window), and a pane shell reports
+  `login_shell` **yes** with `alias t` present — i.e. `bash_profile` is being sourced.
+
+  Not verified mechanically: the rendered load average in the status line. tmux only runs `#()`
+  jobs for an attached client, and a detached test server returns empty even for `#(echo HELLO)`,
+  so this harness can't exercise it. The underlying pipeline was checked directly —
+  `sh -c "uptime | sed 's/.*load averages*: //'"` → `4.05 4.58 4.47`. Worth an eyeball next time
+  you start a session.
+
+  No `install.sh` change needed — it already links `tmux.conf` and `bin/tmux.bash`.
 
 ---
 
@@ -170,7 +197,8 @@ Recorded so these don't need re-deriving.
 |---|---|
 | Homebrew prefix | `/opt/homebrew` (Apple Silicon); `/usr/local` exists but has no `etc/` |
 | Installed formulae (relevant) | `libpq`, `nvm`, `python@3.14` |
-| Not installed | `tmux`, `gsed`, `mysql-client`, `postgresql@16`, `pnpm@9` (formula), `reattach-to-user-namespace`, `loadavg`, `cntlm` (`lein` / `go` also absent — both cleaned up in §3) |
+| Not installed | `gsed`, `mysql-client`, `postgresql@16`, `pnpm@9` (formula), `reattach-to-user-namespace`, `loadavg`, `cntlm` (`lein` / `go` also absent — both cleaned up in §3) |
+| Installed since | `tmux` 3.7b, `bash-completion@2` 2.18.0 |
 | Present | `emacs`, `direnv`, `terraform`, `pnpm` (via nvm/node), `psql` (via `libpq`), `python3` (3.14) |
 | Repo remote | `github.com/karstendick/dotfiles` — **public**, fork |
 | Credential scan | No tokens/keys/passwords in `claude/` |
