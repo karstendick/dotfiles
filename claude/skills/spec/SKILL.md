@@ -4,4 +4,5 @@
 2. Use this structure: Context → Requirements → Design Decisions → Implementation Plan → Test Plan → Open Questions
 3. Never add content the user hasn't discussed
 4. Mark deferred items clearly and do not implement them
-5. After writing, wait for user approval before implementing
+5. Write the spec to a file in `docs/specs/` named `agi-<number>-<short-slug>.md`, following the same format as existing files in that directory
+6. After writing, wait for user approval before implementing
