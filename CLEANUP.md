@@ -73,27 +73,43 @@ All verified missing on this machine (Homebrew prefix is `/opt/homebrew`).
       nag, which can't fire under 5.3. (If you ever `chsh` back to `/bin/bash`, the nag returns;
       re-add the line then.)
 
-- [ ] **Optional — GNU utils.** The deleted `gnu-sed` line's comment was "use GNU versions of
-      utilities". `gnu-sed` isn't installed, but `coreutils` **is**, providing GNU `ls`/`cat`/etc.
-      as `g`-prefixed commands. For unprefixed versions, add
-      `$HOMEBREW_PREFIX/opt/coreutils/libexec/gnubin` to `PATH`. For GNU `sed` specifically you'd
-      need `brew install gnu-sed`.
+- [x] **GNU utils — decided: leave as-is.** The deleted `gnu-sed` line's comment was "use GNU
+      versions of utilities". Current state stays: `coreutils` installed, providing GNU tools as
+      `g`-prefixed commands (`gls`, `gdate`, `greadlink`), and **no** `gnubin` on `PATH`.
+      Rationale: adding `$HOMEBREW_PREFIX/opt/coreutils/libexec/gnubin` to `PATH` would shadow
+      100+ system binaries (`ls`, `cp`, `rm`, `ln`, `date`, `stat`, `install`, …), which risks
+      scripts silently depending on GNU behavior and then breaking on stock macOS. The `g`-prefix
+      approach gives GNU when explicitly asked for, with nothing shadowed.
+      If this ever comes up again: `brew install gnu-sed grep` for `gsed`/`ggrep` (the two where
+      BSD diverges most — `sed -i` needs an empty arg, no `grep -P`), and prefer aliases in
+      `bash_aliases` over a `PATH` change, since aliases don't affect scripts.
 
-- [ ] **PATH entries for formulae that aren't installed.** Installed formulae are only
-      `libpq`, `nvm`, `python@3.14`:
-  - `mysql-client@8.0` — lines 100 **and** 106 (duplicated)
-  - `pnpm@9` — lines 103 **and** 107 (duplicated; real `pnpm` comes from nvm/node)
-  - `postgresql@16` — line 108 (real `psql` comes from `libpq`)
-  - `python@3.12` — line 102 (you have `python@3.14`)
+- [x] **PATH entries for formulae that aren't installed — all removed.** Six lines gone, four
+      dead paths (two were duplicated). Installed formulae are only `libpq`, `nvm`, `python@3.14`.
+  - `mysql-client@8.0` (×2) — not used in current development
+  - `pnpm@9` (×2) — real `pnpm` comes from nvm/node
+  - `postgresql@16` — real `psql` comes from `libpq`, already on `PATH` one line below
+  - `python@3.12` — superseded by `python@3.14`
 
-  Harmless but clutter. If you want any of these tools back, install the formula rather than
-  keeping a path to nothing.
+  Also dropped the now-stale comment "To put brew's python and pnpm on the `$PATH`" and added one
+  noting that `libpq` needs an explicit path because it's keg-only.
+
+  Verified in a clean `env -i` login shell — everything real still resolves, 153 completions:
+  `psql`/`pg_dump` → `libpq`, `pnpm`/`node` → nvm (node v22.22.2), `python3`/`pip3` → 3.14.
+
+  Note: unversioned `python` and `pip` are not on `PATH`. That was already true before this
+  cleanup (the `python@3.12` path was dead), so nothing regressed. If you want them, add
+  `$HOMEBREW_PREFIX/opt/python@3.14/libexec/bin` — that directory does exist.
 
 ---
 
 ## 3. Possibly-unused toolchains — judgment calls
 
 These are "do you still use this?" questions, not defects. Left alone pending a decision.
+
+- [ ] **Go.** `go` is not installed. `bash_profile:31-33` sets `GOPATH="$HOME/go"` and
+      `GOBIN="$GOPATH/bin"` and puts `$GOBIN` on `PATH`, but `~/go` doesn't exist — so that's a
+      fourth dead `PATH` entry. Noticed while verifying the section 2 cleanup. Three lines.
 
 - [ ] **Clojure.** `lein` is not installed. `lein/profiles.clj` pins `cider-nrepl 0.8.1`,
       `midje 1.7.0`, `eastwood 0.2.0`, `slamhound 1.3.1` — all 2014–15 vintage. Affects
@@ -142,7 +158,7 @@ Recorded so these don't need re-deriving.
 |---|---|
 | Homebrew prefix | `/opt/homebrew` (Apple Silicon); `/usr/local` exists but has no `etc/` |
 | Installed formulae (relevant) | `libpq`, `nvm`, `python@3.14` |
-| Not installed | `tmux`, `lein`, `gsed`, `mysql-client`, `postgresql@16`, `pnpm@9` (formula), `reattach-to-user-namespace`, `loadavg`, `cntlm` |
+| Not installed | `tmux`, `lein`, `go`, `gsed`, `mysql-client`, `postgresql@16`, `pnpm@9` (formula), `reattach-to-user-namespace`, `loadavg`, `cntlm` |
 | Present | `emacs`, `direnv`, `terraform`, `pnpm` (via nvm/node), `psql` (via `libpq`), `python3` (3.14) |
 | Repo remote | `github.com/karstendick/dotfiles` — **public**, fork |
 | Credential scan | No tokens/keys/passwords in `claude/` |
