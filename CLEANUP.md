@@ -107,13 +107,25 @@ All verified missing on this machine (Homebrew prefix is `/opt/homebrew`).
 
 These are "do you still use this?" questions, not defects. Left alone pending a decision.
 
-- [ ] **Go.** `go` is not installed. `bash_profile:31-33` sets `GOPATH="$HOME/go"` and
-      `GOBIN="$GOPATH/bin"` and puts `$GOBIN` on `PATH`, but `~/go` doesn't exist — so that's a
-      fourth dead `PATH` entry. Noticed while verifying the section 2 cleanup. Three lines.
+- [x] **Go — removed.** No longer writing Go. Dropped the `## Add go stuff` block from
+      `bash_profile` (`GOPATH="$HOME/go"`, `GOBIN`, and `$GOBIN` on `PATH`). `~/go` didn't exist,
+      so this was a fourth dead `PATH` entry. `go` was confirmed not installed and not a Homebrew
+      formula.
 
-- [ ] **Clojure.** `lein` is not installed. `lein/profiles.clj` pins `cider-nrepl 0.8.1`,
-      `midje 1.7.0`, `eastwood 0.2.0`, `slamhound 1.3.1` — all 2014–15 vintage. Affects
-      `lein/profiles.clj`, `midje.clj`, and two `install.sh` lines.
+- [x] **Clojure — removed.** No longer writing Clojure; `lein` was not installed. Removed:
+  - `lein/profiles.clj` (`git rm`) — the whole `lein/` directory is gone. Pinned `lein-pprint`,
+    `lein-kibit`, `eastwood 0.2.0`, `cider-nrepl 0.8.1`, `slamhound 1.3.1`, `midje 1.7.0`,
+    `humane-test-output 0.8.1` — all 2014–15 vintage.
+  - `midje.clj` (`git rm`) — one line: `(change-defaults :print-level :print-facts)`.
+  - Three `install.sh` lines: `mymkdir ~/.lein`, and the two `symlink` lines for the above.
+  - The symlinks those had created, which would otherwise dangle: `~/.midje.clj` and
+    `~/.lein/profiles.clj`. `~/.lein` was then empty, so it's removed too.
+
+  Verified: `bash -n` passes on `bash_profile` and `install.sh`; a repo-wide grep for
+  `gopath|gobin|golang|clojure|lein|midje|nrepl|cider|eastwood|slamhound` returns nothing outside
+  this file; `./install.sh` runs clean (exit 0, no errors); a clean `env -i` login shell has
+  `GOPATH`/`GOBIN` unset, 153 completions, and **no** nonexistent `PATH` entries from this repo —
+  the only ones left are Apple's own `cryptexd` bootstrap paths.
 
 - [ ] **tmux.** `tmux` is not installed, but `tmux.conf`, `bin/tmux.bash`, and the `t` / `tl`
       aliases remain. If you keep them, two latent bugs to fix first:
@@ -158,7 +170,7 @@ Recorded so these don't need re-deriving.
 |---|---|
 | Homebrew prefix | `/opt/homebrew` (Apple Silicon); `/usr/local` exists but has no `etc/` |
 | Installed formulae (relevant) | `libpq`, `nvm`, `python@3.14` |
-| Not installed | `tmux`, `lein`, `go`, `gsed`, `mysql-client`, `postgresql@16`, `pnpm@9` (formula), `reattach-to-user-namespace`, `loadavg`, `cntlm` |
+| Not installed | `tmux`, `gsed`, `mysql-client`, `postgresql@16`, `pnpm@9` (formula), `reattach-to-user-namespace`, `loadavg`, `cntlm` (`lein` / `go` also absent — both cleaned up in §3) |
 | Present | `emacs`, `direnv`, `terraform`, `pnpm` (via nvm/node), `psql` (via `libpq`), `python3` (3.14) |
 | Repo remote | `github.com/karstendick/dotfiles` — **public**, fork |
 | Credential scan | No tokens/keys/passwords in `claude/` |

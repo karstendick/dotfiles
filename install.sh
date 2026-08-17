@@ -37,7 +37,6 @@ dirlink() {
 }
 
 mymkdir ~/bin
-mymkdir ~/.lein
 
 symlink bash_prompt
 symlink bash_aliases
@@ -51,9 +50,6 @@ symlink gitignore
 for file in $(ls bin); do
     symlink bin/$file ~/bin/$file
 done
-
-symlink lein/profiles.clj ~/.lein/profiles.clj
-symlink midje.clj
 
 symlink editrc
 
