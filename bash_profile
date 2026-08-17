@@ -38,8 +38,6 @@ for file in ~/.{bash_prompt,bash_aliases}; do
 done;
 unset file;
 
-[ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
-
 source ~/bin/tmux.bash
 
 # Use GNU versions of utilities, such as `sed`
@@ -47,6 +45,15 @@ PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
 
 # Put brew in the $PATH
 eval "$(/opt/homebrew/bin/brew shellenv)"
+
+# Bash completion. Must come after brew shellenv, which sets $HOMEBREW_PREFIX.
+# bash-completion@2 needs bash >= 4.1, so this is a no-op under Apple's /bin/bash 3.2.
+[[ -r "$HOMEBREW_PREFIX/etc/profile.d/bash_completion.sh" ]] && . "$HOMEBREW_PREFIX/etc/profile.d/bash_completion.sh"
+
+# git comes from Xcode rather than Homebrew, so bash-completion can't auto-load its completion.
+_git_completion=/Library/Developer/CommandLineTools/usr/share/git-core/git-completion.bash
+[[ -r "$_git_completion" ]] && . "$_git_completion"
+unset _git_completion
 
 # Suppress Apple's message trying to get me to use zsh
 export BASH_SILENCE_DEPRECATION_WARNING=1

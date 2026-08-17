@@ -51,9 +51,35 @@ disabled, rotating/rewriting adds nothing. `HEAD` going forward is clean.
 
 All verified missing on this machine (Homebrew prefix is `/opt/homebrew`).
 
-- [ ] **Intel Homebrew leftovers** — neither path exists:
-  - line 41 — `[ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion`
-  - line 66 — `PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"` (`gsed` isn't installed either)
+- [x] **Intel Homebrew leftovers** — both dead lines removed. Rather than just deleting the
+      completion line, bash completion is now actually working:
+  - Installed `bash-completion@2` (2.18.0).
+  - Sourced from `$HOMEBREW_PREFIX/etc/profile.d/bash_completion.sh`, placed **after** the
+    `brew shellenv` eval — the old line ran before it, so `$HOMEBREW_PREFIX` wasn't set yet.
+  - Added Apple's `git-completion.bash` explicitly: git comes from Xcode, not Homebrew, so
+    `bash-completion` can't auto-discover it. This was the one gap after install.
+  - Verified: 153 completions registered; `git`, `gh`, `aws`, `brew`, `terraform`, `docker`,
+    `nvm`, `ruff` all work. There were already 14 unused completion scripts sitting in
+    `/opt/homebrew/etc/bash_completion.d`.
+
+- [ ] **Finish the shell switch — needs your password, so not done.** Completion requires
+      bash >= 4.1 and your login shell is still Apple's `/bin/bash` 3.2.57, so the new config is
+      currently a no-op at login. Two commands:
+      ```bash
+      sudo sh -c 'echo /opt/homebrew/bin/bash >> /etc/shells'
+      chsh -s /opt/homebrew/bin/bash
+      ```
+      Then open a new terminal. Revert with `chsh -s /bin/bash`. `bash_profile` was verified to
+      load cleanly under 5.3 (`bash -n` passes, `bash -li` runs clean), so login won't break.
+
+- [ ] **After the switch:** `BASH_SILENCE_DEPRECATION_WARNING=1` becomes unnecessary — it only
+      silences bash 3.2's zsh nag. Left in place for now so reverting stays clean.
+
+- [ ] **Optional — GNU utils.** The deleted `gnu-sed` line's comment was "use GNU versions of
+      utilities". `gnu-sed` isn't installed, but `coreutils` **is**, providing GNU `ls`/`cat`/etc.
+      as `g`-prefixed commands. For unprefixed versions, add
+      `$HOMEBREW_PREFIX/opt/coreutils/libexec/gnubin` to `PATH`. For GNU `sed` specifically you'd
+      need `brew install gnu-sed`.
 
 - [ ] **PATH entries for formulae that aren't installed.** Installed formulae are only
       `libpq`, `nvm`, `python@3.14`:
