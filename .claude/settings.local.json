@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(ls /Users/joshua/git/dotfiles/claude/ && ls ~/.claude/)",
-      "Read(//Users/joshua/.claude/**)"
-    ]
-  }
-}

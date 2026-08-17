@@ -4,3 +4,4 @@ tags
 .bk
 ._*
 *~
+.claude/settings.local.json
