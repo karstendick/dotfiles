@@ -62,18 +62,16 @@ All verified missing on this machine (Homebrew prefix is `/opt/homebrew`).
     `nvm`, `ruff` all work. There were already 14 unused completion scripts sitting in
     `/opt/homebrew/etc/bash_completion.d`.
 
-- [ ] **Finish the shell switch — needs your password, so not done.** Completion requires
-      bash >= 4.1 and your login shell is still Apple's `/bin/bash` 3.2.57, so the new config is
-      currently a no-op at login. Two commands:
-      ```bash
-      sudo sh -c 'echo /opt/homebrew/bin/bash >> /etc/shells'
-      chsh -s /opt/homebrew/bin/bash
-      ```
-      Then open a new terminal. Revert with `chsh -s /bin/bash`. `bash_profile` was verified to
-      load cleanly under 5.3 (`bash -n` passes, `bash -li` runs clean), so login won't break.
+- [x] **Shell switch — done** (by you; needed a password). Login shell is now
+      `/opt/homebrew/bin/bash`, bash 5.3.15 instead of Apple's 3.2.57. Verified in a clean
+      `env -i` login shell: bash-completion 2.18.0 loads, 153 completions registered.
+      Revert with `chsh -s /bin/bash` if ever needed.
+  - Minor: `/etc/shells` ended up with `/opt/homebrew/bin/bash` listed twice (lines 12 and 13) —
+    the append ran twice. Cosmetic; `chsh` doesn't care. Tidy with `sudo sed -i '' '13d' /etc/shells`.
 
-- [ ] **After the switch:** `BASH_SILENCE_DEPRECATION_WARNING=1` becomes unnecessary — it only
-      silences bash 3.2's zsh nag. Left in place for now so reverting stays clean.
+- [x] **Removed `BASH_SILENCE_DEPRECATION_WARNING=1`** — done. It only silenced bash 3.2's zsh
+      nag, which can't fire under 5.3. (If you ever `chsh` back to `/bin/bash`, the nag returns;
+      re-add the line then.)
 
 - [ ] **Optional — GNU utils.** The deleted `gnu-sed` line's comment was "use GNU versions of
       utilities". `gnu-sed` isn't installed, but `coreutils` **is**, providing GNU `ls`/`cat`/etc.

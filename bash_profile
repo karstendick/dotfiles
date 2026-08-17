@@ -52,9 +52,6 @@ _git_completion=/Library/Developer/CommandLineTools/usr/share/git-core/git-compl
 [[ -r "$_git_completion" ]] && . "$_git_completion"
 unset _git_completion
 
-# Suppress Apple's message trying to get me to use zsh
-export BASH_SILENCE_DEPRECATION_WARNING=1
-
 export NVM_DIR="$HOME/.nvm"
 [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"  # This loads nvm
 [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
