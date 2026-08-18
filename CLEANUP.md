@@ -165,16 +165,46 @@ These are "do you still use this?" questions, not defects. Left alone pending a 
 
 ## 4. `claude/settings.json`
 
-- [ ] **~70% duplication.** The same ~40-entry AWS allowlist block appears three times — bare,
-      `--profile agi-prod`, `--profile agi-dev` — roughly 120 of 174 lines. Collapsible with
-      wildcard patterns.
+- [x] **AWS duplication collapsed — 118 lines → 45, file 175 → 101, allow entries 166 → 93.**
+      The same 39 read-only operations were written out three times (bare, `--profile agi-prod`,
+      `--profile agi-dev`), plus `aws configure list-profiles` in the bare block only.
 
-- [ ] **Review the permission posture** (deliberate choice, just worth a conscious look).
-      `defaultMode: "acceptEdits"` combined with blanket `Edit` / `Write` and:
-  - `Bash(sed*)` — matches `sed -i`, i.e. unprompted in-place file rewriting
-  - `Bash(find:*)` — `find` supports `-delete` and `-exec`
+      Now two patterns per service+verb-family — a bare one and a `--profile *` twin:
 
-  This applies globally, in every project you use Claude Code in.
+      ```json
+      "Bash(aws ecs describe-*)",
+      "Bash(aws --profile * ecs describe-*)",
+      ```
+
+      **Services stay explicitly enumerated on purpose.** The tempting further collapse to six
+      entries (`Bash(aws * describe-*)`, `list-*`, `get-*`, ± profile) was rejected: it would reach
+      services never listed, where "read-only" stops meaning "harmless" —
+      `aws secretsmanager get-secret-value`, `aws ssm get-parameter --with-decryption`,
+      `aws iam list-access-keys` all hand over credential material, and unprompted under
+      `agi-prod`. The verbosity was doing real work as a service allowlist.
+
+      Uniform trailing-`*` glob form, no `:*`, throughout the block. The first attempt mixed the
+      two — `Bash(aws --profile * logs tail:*)` — which under prefix semantics never matches
+      `agi-prod`, silently dropping 12 operations. Caught by a coverage check that replayed all 118
+      old entries as representative commands against the 45 new patterns and asserted every one
+      still matched; it also asserted no non-AWS entry moved. Verified after writing: valid JSON,
+      `defaultMode` intact, `~/.claude/settings.json` resolving to the edited file, and a diff
+      confirming the only non-AWS change is the typo below.
+
+      The `--profile agi-dev` block was redundant in the common case anyway —
+      [`bash_profile:79`](bash_profile) sets `export AWS_PROFILE=agi-dev` — but `--profile *`
+      keeps it working when a project `.envrc` overrides `AWS_PROFILE` under direnv.
+
+- [x] **Typo fixed:** `Bash(gh api repos/AGIHoldings/monorepo/actions/ *)` had a stray space after
+      `actions/`, so it matched nothing real (`gh api repos/.../actions/runs` has no space there).
+      Now `actions/*`.
+
+- [x] **Permission posture — reviewed and kept as-is.** `defaultMode: "acceptEdits"` with blanket
+      `Edit`/`Write`, `Bash(sed*)` (matches `sed -i`), `Bash(find:*)` (`find` supports `-delete`
+      and `-exec`), `mcp__linear-server__*` (includes `save_issue`, `delete_comment`, `merge_diff`
+      — writes to a shared team workspace), and `Bash(gh pr edit:*)` (mutates PRs on GitHub). All
+      global, in every project. Deliberate and comfortable; not revisiting. There is no `deny` or
+      `ask` list.
 
 ---
 
