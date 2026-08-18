@@ -396,29 +396,7 @@ $
       Note `✘130` appears on every Ctrl-C, e.g. killing a dev server. Accurate but arguably noise —
       suppress 130 specifically if it grates.
 
-### Not done — candidates, cheapest first
-
-- [ ] **`$AWS_PROFILE`.** Free: a plain env-var expansion, no subprocess. Worth it because
-      [`bash_profile:79`](bash_profile) hard-exports `agi-dev` *and* direnv is in `PROMPT_COMMAND`,
-      so a project `.envrc` can silently repoint the shell at another account. Getting `agi-prod`
-      wrong is the expensive mistake this would prevent.
-
-      **This is not what was deleted in §5.** That segment read `AWS_ROLE_NAME` (a 2016 assume-role
-      workflow, variable now unset everywhere) and was written `PS1+=" $(aws_role_name)"` —
-      unescaped, so it evaluated **once at shell startup** and never updated. It also emitted raw
-      `tput` escapes outside `\[ \]`. A fresh `$AWS_PROFILE` segment is a different thing.
-
-- [ ] **Background jobs and/or a timestamp.** `\j` and `\D{%H:%M}` — bash prompt escapes, zero
-      subprocess, no helper function. The timestamp earns its keep when reconstructing from
-      scrollback what was run when; `\j` matters if suspended jobs get forgotten.
-
-- [ ] **Active Node version, when a `.nvmrc` is nearby.** Verified `$NVM_BIN` is exported and
-      contains the version (`/Users/joshua/.nvm/versions/node/v22.22.2/bin`), so this is a parameter
-      expansion — **no `node -v` subprocess**. Relevant with per-project pins; and version drift
-      between shells is invisible today — while checking this, the session shell had v22.22.2 while
-      a fresh login shell had v22.23.2.
-
-### Done since writing this list
+### Done
 
 - [x] **Duration of the last command, when it's slow — done.** Renders `on main ↑3 [+!?] 1.3s ✘1`:
       the elapsed time in `yellow`, before the exit status so the failure marker stays rightmost.
@@ -496,6 +474,25 @@ $
 
 ### Rejected, so they don't get re-proposed
 
+- **`$AWS_PROFILE`.** Would have been free — a plain env-var expansion, no subprocess — and the
+  hazard was real on paper: [`bash_profile:79`](bash_profile) hard-exports `agi-dev` *and* direnv is
+  in `PROMPT_COMMAND`, so a project `.envrc` could silently repoint the shell at another account.
+  **Declined:** profiles aren't switched via env vars in practice, so the segment would be a
+  constant that never changes.
+
+  Noting for the record, since it looks like a re-proposal of something already deleted: the §5
+  removal was a *different* segment. That one read `AWS_ROLE_NAME` (a 2016 assume-role workflow,
+  variable now unset everywhere), was written `PS1+=" $(aws_role_name)"` — unescaped, so it evaluated
+  **once at shell startup** and never updated — and emitted raw `tput` escapes outside `\[ \]`.
+- **Background jobs (`\j`) and/or a timestamp (`\D{%H:%M}`).** Both are bash prompt escapes: zero
+  subprocess, no helper function. **Declined:** background jobs aren't used, so `\j` would always
+  read `0`. The timestamp was bundled into the same item and went with it; its case was
+  reconstructing from scrollback what was run when, if that ever becomes worth having.
+- **Active Node version.** `$NVM_BIN` is exported and contains the version
+  (`/Users/joshua/.nvm/versions/node/v22.22.2/bin`), so this needed only a parameter expansion — no
+  `node -v` subprocess. **Declined:** Node versions aren't switched per project. (The drift this
+  would have surfaced is still real — while checking, the session shell had v22.22.2 and a fresh
+  login shell had v22.23.2 — it just isn't worth prompt space.)
 - **In-progress rebase / merge state.** Verified as a genuine blind spot: mid-conflicted-rebase the
   prompt renders `on 02b5113 [+!]` while git reports `## HEAD (no branch)` / `UU f`.
   `symbolic-ref` fails on detached HEAD, so it falls through to the short SHA — indistinguishable
