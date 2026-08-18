@@ -14,8 +14,32 @@ shopt -s lithist
 #########################################################
 
 HISTCONTROL=ignoredups:ignorespace
-HISTSIZE=1000
-HISTFILESIZE=2000
+HISTSIZE=100000
+HISTFILESIZE=200000
+
+# Share history live across concurrent shells (multiple iTerm2 windows), so Ctrl+R in one window
+# finds commands run in another. `histappend` alone only flushes at shell exit, and a shell only
+# reads the file at startup, so without this a command isn't visible elsewhere until you close the
+# window that ran it *and* open a fresh one.
+#
+# `history -a` appends this shell's new entries to the file after every command; `history -n` reads
+# back only the lines added since this shell last read it. Deliberately *not* the widespread
+# `history -a; history -c; history -r` recipe — that wipes the in-memory list and reloads the whole
+# file every prompt, which interleaves every window's commands into up-arrow recall. With `-n`, your
+# own commands stay at the bottom of the stack and other windows' merge in behind them.
+#
+# HISTTIMEFORMAT is load-bearing, not cosmetic: `lithist` (set above) stores multi-line commands
+# with literal embedded newlines, and concurrent appends from several shells would be impossible to
+# split back apart. Setting it makes bash write a `#<epoch>` marker before each entry, which
+# delimits them unambiguously. Side effect: `history` output is now timestamped.
+HISTTIMEFORMAT='%F %T '
+
+# Guarded so re-sourcing this file doesn't stack duplicate entries. This lands *after*
+# `prompt_save_status` in the final chain (bash_prompt is sourced below and prepends itself), so the
+# exit status is snapshotted before these builtins overwrite $?.
+if [[ ";${PROMPT_COMMAND:-};" != *";history -a;"* ]]; then
+	PROMPT_COMMAND="history -a; history -n${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
+fi
 
 #####################################
 ## Other options and configurations #
