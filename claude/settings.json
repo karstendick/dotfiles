@@ -97,5 +97,7 @@
     ],
     "defaultMode": "acceptEdits"
   },
-  "theme": "dark"
+  "theme": "dark",
+  "alwaysThinkingEnabled": true,
+  "showThinkingSummaries": true
 }
