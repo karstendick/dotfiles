@@ -210,12 +210,62 @@ These are "do you still use this?" questions, not defects. Left alone pending a 
 
 ## 5. Small stuff
 
-- [ ] `.gitmodules` is empty (0 bytes) but tracked — delete it.
-- [ ] `gitignore:3` still has `Replication/src/scripts/test.php`, inherited from Buck's 2013
+- [x] **`.gitmodules` deleted** (`git rm`). It was the empty blob `e69de29` — 0 bytes but tracked,
+      so functionally inert: no gitlink entries (mode `160000`) in the index, `git submodule status`
+      silent, no `submodule.*` keys in `.git/config`.
+      Origin: added 2013-06-09 in Buck's `d0a03a4 "vim-fish and config.fish"` with 99 bytes
+      declaring `vim/bundle/fish` → `aliva/vim-fish`, the pathogen-era convention of one git
+      submodule per Vim plugin. This repo had four over its life (`fish`, `markdown`, `MatchTag`,
+      `nginx-vim-syntax`). Your `72142d9 "removed tons of unused files"` (2016-03-02) stripped the
+      3 lines of content but left the file tracked, and it sat empty for ten years.
+- [x] `gitignore:3` still has `Replication/src/scripts/test.php`, inherited from Buck's 2013
       upstream commit. Not yours.
-- [ ] `README.md` typo — "overwrte" → "overwrite".
-- [ ] `bash_prompt:121` — `aws_role_name()` is defined at lines 9–16 but its `PS1` use is
-      commented out. Intentional? Same for the commented-out hostname on lines 116–117.
+- [x] `README.md` typo fixed — "overwrte" → "overwrite" (line 20).
+- [x] **`bash_prompt` dead prompt segments removed — 17 lines.** Both halves were "defined but its
+      `PS1` line is commented out", so neither had rendered in years.
+  - `aws_role_name()` (8 lines) plus its commented `PS1` line — removed by you. It used
+    `tput setaf 1` directly rather than the colour palette, so it had no coupling to anything.
+  - The SSH hostname (8 lines): the `hostStyle` if/else keyed on `SSH_TTY`, plus the commented
+    `PS1` lines for `at` and `\h`. `hostStyle` was assigned in both branches and referenced
+    nowhere live. Removed rather than restored — no longer ssh'ing into servers, so the
+    "am I on a remote box?" cue isn't needed.
+
+  Note the `at` separator was **also** commented out; had it been left live the prompt would have
+  read `joshua at  in ~/dir` with a dangling "at".
+
+  Verified: no `aws_role_name`/`AWS_ROLE_NAME`/`hostStyle`/`SSH_TTY` left in the repo; `bash -n`
+  passes; sourcing with `SSH_TTY` set still succeeds; and rendered in a clean `env -i` shell the
+  prompt is unchanged — `joshua in ~/git/dotfiles on master [+!]`, `PS2` (`→`) intact. Palette
+  check: `red` down to `userStyle`, `yellow` to `PS2`, `bold` to the leading newline — nothing
+  orphaned. `black`, `cyan`, `purple` are unused but already were.
+
+- [x] **`prompt_git` shellcheck warnings fixed** — SC2046 at `bash_prompt:14`, SC2091 at 23, 28, 38.
+      Four conditions wrapped their `git` call in a command substitution:
+
+      ```bash
+      if [ $(git rev-parse --is-inside-work-tree &>/dev/null; echo "${?}") == '0' ]; then
+      if ! $(git diff --quiet --ignore-submodules --cached); then
+      if ! $(git diff-files --quiet --ignore-submodules --); then
+      if $(git rev-parse --verify refs/stash &>/dev/null); then
+      ```
+
+      Now each tests the command directly (`if ! git diff --quiet ...; then`).
+
+      **These were not broken.** First read suggested "runs the command's output, works by
+      accident" — wrong. When a command substitution expands to no words, bash uses *the
+      substitution's* exit status; verified with `f() { return 1; }; if ! $(f); then ...`, which
+      does enter the branch. Since `--quiet` guarantees no output, the old code was correct, just
+      relying on an obscure rule. Had output ever appeared it would have been executed as a
+      command — noisily (`command not found`), not silently.
+
+      So this is a readability/lint fix, not a bug fix. Verified as a **behaviour-preserving**
+      refactor by diffing old vs. new `prompt_git` output across ten synthetic repos — not a repo,
+      clean, staged (`+`), unstaged (`!`), untracked (`?`), stashed (`$`), all four combined,
+      detached HEAD (short SHA), a repo with no commits, and cwd inside `.git`. **All ten
+      byte-identical.** `shellcheck` now reports nothing for `prompt_git`.
+
+- [ ] `shellcheck` SC2034 on `black`, `cyan`, `purple` (`bash_prompt:77,79,82`) — defined but never
+      used. Deliberately kept as a full palette; noted so the warnings aren't mistaken for new.
 
 ---
 
