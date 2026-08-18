@@ -189,6 +189,92 @@ These are "do you still use this?" questions, not defects. Left alone pending a 
 
 ---
 
+## 6. Brewfile — package installs are now version-controlled
+
+Added 2026-08-17. Closes the biggest gap in the "clone and be productive" story: `install.sh` gave
+you config but none of the tools it points at, and several dotfiles hard-depend on brew packages
+(`bash_profile` sources `bash-completion@2` and references `libpq`/`nvm`; `tmux.conf` needs tmux).
+
+- [x] **`Brewfile` at repo root**, generated with `brew bundle dump`. 16 formulae, 5 casks, 1 tap,
+      11 VS Code extensions, no npm globals (see the Node item below). It records only packages
+      installed **on request**, not all ~90 including dependencies, so deps resolve fresh on a new
+      machine instead of being pinned. Kept **byte-identical to a fresh dump** — no hand-edited
+      lines — so regenerating it can't silently lose anything.
+
+- [x] **`install.sh --brew`** bootstraps a new machine before symlinking: `brew bundle install`,
+      then Node via nvm and the pnpm shim via corepack. Opt-in on purpose — bare `./install.sh`
+      stays fast, offline and idempotent. Falls back to `/opt/homebrew/bin/brew` when brew isn't on
+      `PATH` (the usual case in a non-login shell on a fresh machine), and errors out clearly if
+      Homebrew is absent. Unknown flags print usage and exit 1 rather than being silently ignored.
+
+- [x] **Node / TypeScript, via corepack rather than brew or npm.** The chain is Homebrew → `nvm` →
+      `node` → `corepack` → `pnpm`. The load-bearing detail: **`pnpm` is a corepack shim**
+      (`bin/pnpm` → `corepack/dist/pnpm.js`), and corepack reads each project's `packageManager`
+      field and fetches that exact version — the monorepo pins `pnpm@11.15.1` and that's precisely
+      what was installed. So:
+  - **Not** `brew install pnpm` (would pin 11.22.0 globally and ignore those fields).
+  - **Not** a global `npm i -g pnpm` (tied to one Node version, breaks on `nvm use`).
+  - Removing corepack would remove pnpm — it isn't dead weight despite never being used directly.
+  - `yarn@1.22.22` **was** a real npm global and genuinely unused: `npm uninstall -g yarn`.
+    Verified pnpm still resolves afterwards.
+  - `NODE_VERSION=22` at the top of `install.sh` is the version `--brew` installs; projects can
+    still override with their own `.nvmrc`.
+  - TypeScript stays a per-project devDependency (`pnpm exec tsc`), matching what the
+    `claude/settings.json` permissions already assume. Nothing global.
+
+- [x] **Global npm packages excluded from the `Brewfile` permanently.** They install into whichever
+      Node version nvm has active, so they aren't part of brew's state — and they can't install on a
+      fresh machine, where `brew bundle install` runs before any Node exists. `bash_profile` now
+      exports `HOMEBREW_BUNDLE_DUMP_NO_NPM=1`, so a plain `brew bundle dump --force` excludes them
+      with no flag to remember. Verified: a clean login shell dump produces 0 `npm` lines.
+
+- [x] **README** gained "New machine", "Node and TypeScript", and "Brewfile" sections, plus the one
+      step that still isn't automated: the `chsh` to Homebrew bash, which needs a password.
+
+- [x] **VS Code is now brew-managed — done** (by you, from Terminal.app, since it needed VS Code
+      quit and couldn't be done from a session running inside it):
+
+      ```bash
+      brew uninstall --cask visual-studio-code
+      brew install --cask visual-studio-code
+      ```
+
+      Verified afterwards: `/Applications/Visual Studio Code.app` is 1.133.0 matching the cask
+      (was the self-installed 1.128.0), all 11 extensions intact, and
+      `brew bundle check --no-upgrade` reports the Brewfile fully satisfied.
+
+      This also let the hand-added comment come out of the `Brewfile`, which is now **byte-identical
+      to a fresh `brew bundle dump`** — no hand edits, so regenerating it can't silently lose
+      anything.
+
+      Why it was needed: an interrupted `brew bundle install` (see below) staged cask 1.133.0 into
+      the Caskroom and wrote a receipt, but never moved it into `/Applications`, so brew believed it
+      managed VS Code while the app on disk wasn't brew's copy.
+
+**Incident note, for the record.** While testing the `--brew` flag with a stubbed `brew`, one test
+case ran under `env -i` with a minimal `PATH` — precisely the condition that triggers the script's
+`/opt/homebrew/bin/brew` fallback — so it invoked the **real** `brew bundle install` for ~2 minutes
+before being killed. Effects: ~17 formulae upgraded and their new deps pulled in (78 → 105
+formulae; outdated 19 → 2), plus the half-registered VS Code cask above. Checked afterwards: no
+half-installed kegs, all 15 home symlinks intact, and `tmux`/`git`/`aws`/`gh`/`jq`/`terraform`/
+`emacs`/`psql`/`ruff` all working. `fontconfig` and `unbound` were left one version behind by the
+interruption — deliberately not chased, they're pure dependencies.
+
+Useful commands:
+
+| Task | Command |
+|---|---|
+| Restore packages on a new machine | `./install.sh --brew` |
+| Refresh the snapshot after installing something | `brew bundle dump --force` |
+| See what's genuinely missing | `brew bundle check --verbose --no-upgrade` |
+| Install without upgrading existing packages | `brew bundle install --no-upgrade` |
+
+`brew bundle check` without `--no-upgrade` reports every installed-but-**outdated** package as
+unsatisfied, which buries the genuinely missing ones — 23 lines of noise vs. 1 real finding when
+tested here. Avoid `brew bundle cleanup --force`: it uninstalls anything not in the `Brewfile`.
+
+---
+
 ## Appendix: verified environment facts
 
 Recorded so these don't need re-deriving.

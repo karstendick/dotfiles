@@ -38,6 +38,11 @@ source ~/bin/tmux.bash
 # Put brew in the $PATH
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
+# Keep global npm packages out of the Brewfile. They install into whichever Node version nvm has
+# active, so they don't belong in a snapshot of brew's state — and they can't install on a fresh
+# machine, where `brew bundle install` runs before any Node exists. pnpm comes from corepack.
+export HOMEBREW_BUNDLE_DUMP_NO_NPM=1
+
 # Bash completion. Must come after brew shellenv, which sets $HOMEBREW_PREFIX.
 # bash-completion@2 needs bash >= 4.1, so this is a no-op under Apple's /bin/bash 3.2.
 [[ -r "$HOMEBREW_PREFIX/etc/profile.d/bash_completion.sh" ]] && . "$HOMEBREW_PREFIX/etc/profile.d/bash_completion.sh"
