@@ -10,7 +10,7 @@ Write a pull request description and upload it to GitHub.
 
 The user may provide:
 - A PR number (e.g., `148`)
-- A PR URL (e.g., `https://github.com/org/repo/pulls/148`)
+- A PR URL (e.g., `https://github.com/org/repo/pull/148`)
 - Nothing — in which case, infer the PR from the current branch using `gh pr view --json number`
 
 Use the argument as `$ARGUMENTS` if provided.

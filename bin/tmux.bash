@@ -5,7 +5,7 @@ function new_tmux_session {
 
     if tmux has-session -t "$session_name" > /dev/null 2>&1
     then
-        echo "# Attempted to create new tmux session $session_name when it already exists!" 2>&1
+        echo "# Attempted to create new tmux session $session_name when it already exists!" 1>&2
         return 1
     fi
 

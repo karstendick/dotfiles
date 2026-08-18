@@ -1,5 +1,5 @@
 #!/bin/bash
-# Emjoify an image!
+# Emojify an image!
 # (currently supports mac and linux)
 # from Mark Koh
 
@@ -9,7 +9,7 @@ if [ "$1" != "" ]; then
     resized="${filename}_emoji.${extension}"
     echo "Emojifying $1 to $resized"
 
-    if [ -e /usr/bin/convert ]; then 
+    if [ -e /usr/bin/convert ]; then
         # Use convert (linux)
         convert "$1" -resize 128x128 "$resized"
     elif [ -e /usr/bin/sips ]; then
