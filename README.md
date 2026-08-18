@@ -17,7 +17,7 @@ Just run
 ```
 
 It will create symlinks for all the dot-files in your home directory. It will
-overwrte files wherever it tries to install stuff, but will back everything
+overwrite files wherever it tries to install stuff, but will back everything
 up into the .bk directory.
 
 ## New machine
