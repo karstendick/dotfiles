@@ -264,8 +264,9 @@ These are "do you still use this?" questions, not defects. Left alone pending a 
       detached HEAD (short SHA), a repo with no commits, and cwd inside `.git`. **All ten
       byte-identical.** `shellcheck` now reports nothing for `prompt_git`.
 
-- [ ] `shellcheck` SC2034 on `black`, `cyan`, `purple` (`bash_prompt:77,79,82`) — defined but never
+- [x] `shellcheck` SC2034 on `black`, `purple` (`bash_prompt:111,116`) — defined but never
       used. Deliberately kept as a full palette; noted so the warnings aren't mistaken for new.
+      (`cyan` was on this list until the ahead/behind segment in §7 started using it.)
 
 ---
 
@@ -352,6 +353,132 @@ Useful commands:
 `brew bundle check` without `--no-upgrade` reports every installed-but-**outdated** package as
 unsatisfied, which buries the genuinely missing ones — 23 lines of noise vs. 1 real finding when
 tested here. Avoid `brew bundle cleanup --force`: it uninstalls anything not in the `Brewfile`.
+
+---
+
+## 7. PS1 — additional segments
+
+Added 2026-08-18, from a "what else would be useful in the prompt?" pass. The prompt is otherwise
+liked as-is; these are optional additions, not defects. Current shape:
+
+```
+joshua in ~/git/dotfiles on master [!]
+$
+```
+
+- [x] **Exit status of the last command — done.** Shows ` ✘42` at the end of the info line only
+      when the last command failed, in `red`, gone again on the next success. Replaces manually
+      running `echo $?`.
+
+      Two non-obvious details, both silent failures rather than errors if got wrong:
+  - **`$?` cannot be read directly in PS1.** The `$(prompt_git ...)` substitution expands first and
+    overwrites `$?` with its own status, which is always 0. Hence `prompt_save_status` in
+    `PROMPT_COMMAND`, which snapshots it into `lastExitStatus` before PS1 is expanded. A segment
+    placed *before* `$(prompt_git ...)` could read `$?` directly, but then it renders mid-line
+    (`~/git/dotfiles✘1 on master`), so the saved-variable approach is what allows end-of-line
+    placement.
+  - **The double-registration guard is load-bearing.** Without it, re-sourcing `~/.bash_profile`
+    after editing dotfiles leaves `PROMPT_COMMAND=prompt_save_status;prompt_save_status`, and the
+    second copy reads the *first copy's* status — always 0 — so no failure would ever display
+    again. Same idiom as the direnv guard at `bash_profile:67`.
+
+      Depends on [`bash_profile:65`](bash_profile) doing `return $previous_exit_status`: the chain
+      resolves to `_direnv_hook;prompt_save_status`, so the real status only survives because that
+      hook preserves it. A future `PROMPT_COMMAND` entry prepended ahead of this one that *isn't*
+      careful would make the prompt show that entry's status instead.
+
+      Verified in real interactive shells (not simulated PS1 expansion), with both a bare
+      `bash_prompt` and the full `bash_profile`: `true` → nothing, `false` → `✘1`, `true` after a
+      failure → nothing (doesn't go stale), `(exit 42)` → `✘42`, SIGINT → `✘130`; correct spacing
+      outside a git repo; the **success-case prompt is byte-identical** to the pre-change version
+      (same md5 of an `od -c` dump), so nothing shifts when commands succeed.
+
+      Note `✘130` appears on every Ctrl-C, e.g. killing a dev server. Accurate but arguably noise —
+      suppress 130 specifically if it grates.
+
+### Not done — candidates, cheapest first
+
+- [ ] **`$AWS_PROFILE`.** Free: a plain env-var expansion, no subprocess. Worth it because
+      [`bash_profile:79`](bash_profile) hard-exports `agi-dev` *and* direnv is in `PROMPT_COMMAND`,
+      so a project `.envrc` can silently repoint the shell at another account. Getting `agi-prod`
+      wrong is the expensive mistake this would prevent.
+
+      **This is not what was deleted in §5.** That segment read `AWS_ROLE_NAME` (a 2016 assume-role
+      workflow, variable now unset everywhere) and was written `PS1+=" $(aws_role_name)"` —
+      unescaped, so it evaluated **once at shell startup** and never updated. It also emitted raw
+      `tput` escapes outside `\[ \]`. A fresh `$AWS_PROFILE` segment is a different thing.
+
+- [ ] **Background jobs and/or a timestamp.** `\j` and `\D{%H:%M}` — bash prompt escapes, zero
+      subprocess, no helper function. The timestamp earns its keep when reconstructing from
+      scrollback what was run when; `\j` matters if suspended jobs get forgotten.
+
+- [ ] **Active Node version, when a `.nvmrc` is nearby.** Verified `$NVM_BIN` is exported and
+      contains the version (`/Users/joshua/.nvm/versions/node/v22.22.2/bin`), so this is a parameter
+      expansion — **no `node -v` subprocess**. Relevant with per-project pins; and version drift
+      between shells is invisible today — while checking this, the session shell had v22.22.2 while
+      a fresh login shell had v22.23.2.
+
+- [ ] **Duration of the last command, when it's slow.** The one idea here needing real machinery: a
+      `DEBUG` trap to stamp a start time plus a `PROMPT_COMMAND` entry to diff it, then display only
+      above a threshold (~5 s). `DEBUG` traps are the most invasive thing on this list — worth it
+      only if long builds are actually being timed by hand.
+
+### Done since writing this list
+
+- [x] **Ahead/behind upstream — done.** Renders `on master ↑1↓2 [!]`: `↑n` for unpushed commits,
+      `↓n` for unpulled ones, each shown only when non-zero, in `cyan` to separate them from the
+      `blue` `[+!?$]` flags. Fills the gap that `[+!?$]` deliberately left — it describes the
+      working tree and says nothing about the remote, so "needs pushing" wasn't visible.
+
+      Lives inside `prompt_git`, in the same `is-inside-git-dir == false` block as the dirty checks,
+      so the deliberately-lean prompt when cwd is inside `.git` is unchanged.
+
+      Implementation notes:
+  - **One `git` call covers both directions.** `git rev-list --count --left-right '@{upstream}...HEAD'`
+    prints `<behind>\t<ahead>` — verified that **left is behind** (commits only the upstream has),
+    cross-checked against `git status -sb` reporting `[ahead 2]`.
+  - **The no-upstream guard is the `if` itself.** `@{upstream}` makes `rev-list` exit 128 with no
+    output on a branch that isn't tracking anything, and also on a detached HEAD, so both fall
+    through to an empty segment with no special-casing.
+  - **The colour is folded into the value** (`u=" ${cyan}${u}"`), not emitted inline in the `echo`.
+    That keeps the output *byte-identical* to before when a branch is in sync — otherwise a stray
+    `${cyan}` would be written on every prompt in every repo.
+
+      Verified across ten scenarios: in sync (nothing), 2 ahead (`↑2`), 2 behind (`↓2`), 1 ahead +
+      2 behind (`↑1↓2`), that plus a dirty tree (`↑1↓2 [!]`), no-upstream branch, detached HEAD, cwd
+      inside `.git`, a repo with no commits, and not-a-repo. The four no-divergence cases are
+      **byte-identical** to the previous version. Also confirmed the arrows render `cyan`
+      (`38;5;37`) followed by `blue` for the flags, and that the segment coexists with the exit
+      status (`on master ↑1 [$] ✘1`).
+
+      Cost: ~110 ms per render in `~/git/monorepo`, against a ~119 ms baseline — the extra call is
+      ~9 ms, i.e. inside the noise.
+
+### Rejected, so they don't get re-proposed
+
+- **In-progress rebase / merge state.** Verified as a genuine blind spot: mid-conflicted-rebase the
+  prompt renders `on 02b5113 [+!]` while git reports `## HEAD (no branch)` / `UU f`.
+  `symbolic-ref` fails on detached HEAD, so it falls through to the short SHA — indistinguishable
+  from a deliberate `git checkout <sha>`, and the `[+!]` reads as ordinary dirt. Detectable with no
+  subprocess via `.git/rebase-merge`, `.git/rebase-apply`, `.git/MERGE_HEAD`,
+  `.git/CHERRY_PICK_HEAD`, with a `2/5` step counter from `rebase-merge/msgnum` and `end`.
+  **Declined:** merge conflicts are handled through Claude Code now, so the prompt cue has no
+  audience.
+- **Kubernetes context.** Deployment is ECS; no `kubectl` in the `Brewfile`.
+- **A direnv-active indicator.** direnv already announces itself on stderr when it loads.
+
+### Prompt mechanics worth not re-deriving
+
+- **`\[ \]` is processed by PS1 expansion only** — *not* inside the output of a command substitution,
+  nor inside a variable's value. So `prompt_git` and `prompt_exit_status` emit raw, unwrapped colour
+  escapes.
+- **That's safe here only because both live on line 1.** readline measures just the portion of a
+  multi-line prompt after the final newline, so unwrapped escapes before the `\n` can't corrupt
+  wrap width. Anything added to **line 2**, before the `$`, must instead wrap its colour in `\[ \]`
+  in PS1 itself and have the helper emit plain text — otherwise long command lines wrap wrong.
+- **Render cost budget.** `prompt_git` measured at ~119 ms per render in `~/git/monorepo`
+  (655 tracked files), of which `git update-index --really-refresh` is only 14 ms. Room for another
+  git call or two before it would be noticeable.
 
 ---
 

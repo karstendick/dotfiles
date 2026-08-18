@@ -8,6 +8,7 @@ fi;
 
 prompt_git() {
 	local s='';
+	local u='';
 	local branchName='';
 
 	# Check if the current directory is in a Git repository.
@@ -39,6 +40,19 @@ prompt_git() {
 				s+='$';
 			fi;
 
+			# Check how far the branch has diverged from its upstream. One call covers both
+			# directions: --left-right counts each side of the symmetric difference, left being the
+			# commits only the upstream has. Exits non-zero on a branch with no upstream, which
+			# leaves this empty.
+			local counts;
+			if counts="$(git rev-list --count --left-right '@{upstream}...HEAD' 2> /dev/null)" \
+				&& [ -n "${counts}" ]; then
+				local behind="${counts%%[[:space:]]*}";
+				local ahead="${counts##*[[:space:]]}";
+				[ "${ahead}" == '0' ] || u+="↑${ahead}";
+				[ "${behind}" == '0' ] || u+="↓${behind}";
+			fi;
+
 		fi;
 
 		# Get the short symbolic ref.
@@ -48,9 +62,10 @@ prompt_git() {
 			git rev-parse --short HEAD 2> /dev/null || \
 			echo '(unknown)')";
 
+		[ -n "${u}" ] && u=" ${cyan}${u}";
 		[ -n "${s}" ] && s=" [${s}]";
 
-		echo -e "${1}${branchName}${blue}${s}";
+		echo -e "${1}${branchName}${u}${blue}${s}";
 	else
 		return;
 	fi;
