@@ -418,12 +418,52 @@ $
       between shells is invisible today — while checking this, the session shell had v22.22.2 while
       a fresh login shell had v22.23.2.
 
-- [ ] **Duration of the last command, when it's slow.** The one idea here needing real machinery: a
-      `DEBUG` trap to stamp a start time plus a `PROMPT_COMMAND` entry to diff it, then display only
-      above a threshold (~5 s). `DEBUG` traps are the most invasive thing on this list — worth it
-      only if long builds are actually being timed by hand.
-
 ### Done since writing this list
+
+- [x] **Duration of the last command, when it's slow — done.** Renders `on main ↑3 [+!?] 1.3s ✘1`:
+      the elapsed time in `yellow`, before the exit status so the failure marker stays rightmost.
+      Threshold is `PROMPT_DURATION_THRESHOLD_MS` at the top of [`bash_prompt`](bash_prompt),
+      defaulting to 1000 — low enough that most builds, test runs and `git push`es report a time.
+
+      Formatting is compound units, truncated rather than rounded so the prompt never claims more
+      time than the command took: `1.4s` / `9.9s` below 10 s, `12s` / `59s` to a minute, `1m30s` /
+      `12m05s` to an hour, then `1h02m` / `13h45m` with hours unbounded (`36h00m`, no day unit).
+
+      Implementation notes:
+  - **`PS0`, not a `DEBUG` trap.** This was scoped above as needing a `DEBUG` trap; it doesn't. `PS0`
+    is expanded after a command is read and before it runs — a preexec hook with no subprocess, and
+    one nothing else competes for (VS Code's shell integration has no `PS0` reference at all).
+  - **A `DEBUG` trap actively does not work here.** VS Code's shell integration claims the trap, and
+    its branch for chaining a pre-existing one never fires for us: it reads the trap from inside
+    `__vsc_get_trap()`, and **a `DEBUG` trap is invisible from inside a function unless `functrace`
+    is on**. Verified — a trap installed in `bash_prompt` was silently replaced by
+    `__vsc_preexec_only "$_"` and durations stopped appearing in VS Code terminals.
+  - **`set -T` would fix that and isn't worth it.** With `functrace` on, VS Code does wrap ours
+    (`__vsc_preexec_all`) and timing survives — but the trap then dispatches on every command inside
+    every function. Measured **~6x slower** on function-heavy work (1.9 ms → 13 ms per 400 calls), a
+    tax paid by bash-completion, git-completion and nvm for a cosmetic segment.
+  - **`PS0` output is printed, so the stamp hides in an array subscript.**
+    `${promptTimerVoid[$((promptTimerStart=${EPOCHREALTIME/./}))]}` — `promptTimerVoid` is never
+    assigned, so the expansion runs the arithmetic and yields nothing. Parameter and arithmetic
+    expansion in `PS0` happen in the *current* shell, so the assignment persists; a command
+    substitution would have forked and lost it.
+  - **`$EPOCHREALTIME` with the decimal point deleted is plain microseconds** — bash has no floating
+    point, so all the maths is integer. `$SECONDS`/`$EPOCHSECONDS` are too coarse: at a 1 s
+    threshold a fast command straddling a second tick would false-positive. `date +%s%N` is out —
+    BSD `date` has no `%N`.
+  - **No stale duration on an empty line.** `prompt_timer_stop` unsets the stamp after each prompt
+    and only `PS0` re-stamps it, so pressing Enter with no command reports nothing. This needed a
+    first-stamp-wins guard under the `DEBUG` design and needs nothing under `PS0`.
+
+      Verified in both a plain login shell and one with VS Code's shell integration sourced:
+      `sleep 0.3` silent, `sleep 1.4` → `1.4s`, repeated empty Enters silent, `sleep 1.2; false` →
+      `1.2s ✘1`, comment-only lines silent, a `\`-continued line timed once for the whole line, all
+      four compound rungs (`1m30s`, `12m05s`, `1h02m`, `13h45m`), and the threshold suppressing
+      1.5 s at 5000 while showing 0.4 s at 100. Fast commands — prompt *and* command output — are
+      **byte-identical** to before the change.
+
+      Cost: 19 µs per prompt below the threshold, 538 µs when the segment renders (one fork to
+      format), against `prompt_git`'s ~93 ms. Noise.
 
 - [x] **Ahead/behind upstream — done.** Renders `on master ↑1↓2 [!]`: `↑n` for unpushed commits,
       `↓n` for unpulled ones, each shown only when non-zero, in `cyan` to separate them from the

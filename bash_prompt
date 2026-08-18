@@ -6,6 +6,10 @@ elif infocmp xterm-256color >/dev/null 2>&1; then
 	export TERM='xterm-256color';
 fi;
 
+# How long a command has to run before the prompt reports its duration. Nearly everything finishes
+# in well under a second and its timing isn't interesting, so those stay silent.
+PROMPT_DURATION_THRESHOLD_MS=1000;
+
 prompt_git() {
 	local s='';
 	local u='';
@@ -90,6 +94,61 @@ prompt_exit_status() {
 	echo -e " ${1}✘${lastExitStatus}";
 }
 
+# Turn microseconds into something readable: tenths of a second below 10s, whole seconds up to a
+# minute, then compound units. Truncated rather than rounded, so the prompt never claims more time
+# than the command actually took. Hours are unbounded — an overnight run reads as 14h20m.
+prompt_format_duration() {
+	local us="${1}";
+	local seconds=$(( us / 1000000 ));
+
+	if [ "${us}" -lt 10000000 ]; then
+		printf '%d.%ds' "${seconds}" $(( us / 100000 % 10 ));
+	elif [ "${seconds}" -lt 60 ]; then
+		printf '%ds' "${seconds}";
+	elif [ "${seconds}" -lt 3600 ]; then
+		printf '%dm%02ds' $(( seconds / 60 )) $(( seconds % 60 ));
+	else
+		printf '%dh%02dm' $(( seconds / 3600 )) $(( seconds % 3600 / 60 ));
+	fi;
+}
+
+# Stamp the time a command starts. $EPOCHREALTIME is seconds with a microsecond fraction; deleting
+# the decimal point leaves plain microseconds, which is what bash can actually do arithmetic on (it
+# has no floating point).
+#
+# PS0 is expanded after a command is read and before it runs, which makes it a preexec hook that
+# costs no subprocess and that nothing else competes for. A DEBUG trap is the usual way to do this
+# and is the wrong tool here: VS Code's shell integration claims that trap, and its logic for
+# detecting and chaining a pre-existing one can't see ours, because a DEBUG trap is invisible from
+# inside a function unless functrace is on — and turning functrace on makes every command inside
+# every function pay for a trap dispatch, which measured ~6x slower on function-heavy work.
+#
+# Whatever PS0 expands to is printed, so the stamp rides along inside an array subscript:
+# promptTimerVoid is never assigned, so the expansion performs the arithmetic and produces nothing.
+# shellcheck disable=SC2016 # single quotes are the point: bash expands this per command, not now.
+PS0='${promptTimerVoid[$((promptTimerStart=${EPOCHREALTIME/./}))]}';
+
+prompt_timer_stop() {
+	local elapsed;
+	promptDuration='';
+
+	# The previous prompt unset this and only PS0 re-stamps it, so pressing Enter on an empty line —
+	# where no command runs and PS0 never expands — reports nothing instead of a stale duration.
+	if [ -n "${promptTimerStart:-}" ]; then
+		elapsed=$(( ${EPOCHREALTIME/./} - promptTimerStart ));
+		if [ "${elapsed}" -ge $(( PROMPT_DURATION_THRESHOLD_MS * 1000 )) ]; then
+			# Fold in the leading space and the color here rather than in PS1, so that a fast command
+			# leaves the prompt byte for byte what it was before any of this existed.
+			promptDuration=" ${yellow}$(prompt_format_duration "${elapsed}")";
+		fi;
+		unset promptTimerStart;
+	fi;
+}
+# Appended, so this lands after prompt_save_status: clobbering $? is fine once the status is saved.
+if [[ ";${PROMPT_COMMAND:-};" != *";prompt_timer_stop;"* ]]; then
+	PROMPT_COMMAND="${PROMPT_COMMAND:+${PROMPT_COMMAND};}prompt_timer_stop";
+fi;
+
 if tput setaf 1 &> /dev/null; then
 	tput sgr0; # reset colors
 	bold=$(tput bold);
@@ -134,6 +193,7 @@ PS1+="\[${userStyle}\]\u"; # username
 PS1+="\[${white}\] in ";
 PS1+="\[${green}\]\w"; # working directory
 PS1+="\$(prompt_git \"${white} on ${violet}\")"; # Git repository details
+PS1+="\${promptDuration}"; # how long the last command took, if it was slow
 PS1+="\$(prompt_exit_status \"${red}\")"; # exit status of the last command, if it failed
 PS1+="\n";
 PS1+="\[${white}\]\$ \[${reset}\]"; # `$` (and reset color)
