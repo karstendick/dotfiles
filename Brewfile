@@ -29,6 +29,8 @@ brew "shellcheck"
 brew "terminal-notifier"
 # Terminal multiplexer
 brew "tmux"
+# Internet file retriever
+brew "wget"
 # Terraform
 brew "hashicorp/tap/terraform"
 # App to build and share containerised applications and microservices
