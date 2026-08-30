@@ -95,9 +95,10 @@
       "Bash(git -C * log *)",
       "Bash(gh api repos/AGIHoldings/monorepo/actions/*)"
     ],
-    "defaultMode": "acceptEdits"
+    "defaultMode": "auto"
   },
-  "theme": "dark",
   "alwaysThinkingEnabled": true,
-  "showThinkingSummaries": true
+  "showThinkingSummaries": true,
+  "theme": "dark",
+  "agentPushNotifEnabled": true
 }
