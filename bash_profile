@@ -76,6 +76,12 @@ _git_completion=/Library/Developer/CommandLineTools/usr/share/git-core/git-compl
 [[ -r "$_git_completion" ]] && . "$_git_completion"
 unset _git_completion
 
+# Suppress Apple's "the default interactive shell is now zsh" nag. Only Apple's /bin/bash 3.2 ever
+# prints it, so this looks like dead weight once the login shell is Homebrew's 5.x — it was removed
+# on exactly that reasoning in 18b4e5c, and came back when macOS 26.6.2 restored the stock
+# /etc/shells and reset the login shell to /bin/bash. It stays regardless of which bash is winning.
+export BASH_SILENCE_DEPRECATION_WARNING=1
+
 export NVM_DIR="$HOME/.nvm"
 [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"  # This loads nvm
 [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion

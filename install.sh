@@ -80,6 +80,40 @@ dirlink() {
     _create_link "$DIR_LINK_FLAGS" $1 $2
 }
 
+# Make Homebrew's bash 5.x the login shell. Apple's /bin/bash is 3.2, which is too old for
+# bash-completion@2 (needs >= 4.1) and nags about zsh on every login.
+#
+# This is not a one-time new-machine step, which is why it isn't behind a flag: macOS updates
+# reset it. 26.6.2 restored the stock /etc/shells *and* put UserShell back to /bin/bash, silently
+# undoing the switch and taking all 153 completions with it. Re-running install.sh repairs it.
+#
+# Idempotent, and quiet when there's nothing to do -- no sudo is invoked unless /etc/shells is
+# actually missing the entry, so the common case doesn't prompt for a password.
+switch_login_shell() {
+    local brew brew_bash current
+    brew=$(command -v brew || echo /opt/homebrew/bin/brew)
+    if [ ! -x "$brew" ]; then
+        echo "Homebrew not found -- leaving login shell as $(basename "$SHELL")" >&2
+        return
+    fi
+    brew_bash="$("$brew" --prefix)/bin/bash"
+    if [ ! -x "$brew_bash" ]; then
+        echo "$brew_bash not installed -- run 'brew install bash' to switch off Apple's 3.2" >&2
+        return
+    fi
+
+    current=$(dscl . -read "/Users/$(id -un)" UserShell 2>/dev/null | awk '{print $2}')
+    [ "$current" = "$brew_bash" ] && return 0
+
+    echo "Login shell is $current -- switching to $brew_bash"
+    # grep -qxF, because an unguarded append duplicated this line last time.
+    if ! grep -qxF "$brew_bash" /etc/shells; then
+        echo "  adding $brew_bash to /etc/shells (needs sudo)"
+        echo "$brew_bash" | sudo tee -a /etc/shells > /dev/null || return 1
+    fi
+    chsh -s "$brew_bash" && echo "  done -- open a new terminal to pick it up"
+}
+
 mymkdir ~/bin
 
 symlink bash_prompt
@@ -111,3 +145,5 @@ dirlink claude/skills ~/.claude/skills
 symlink hushlogin
 
 echo Backed up files to $BK_DIR
+
+switch_login_shell

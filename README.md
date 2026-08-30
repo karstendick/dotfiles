@@ -38,17 +38,28 @@ Install [Homebrew](https://brew.sh) first, then:
    the top of `install.sh`.
 
 It needs the network, takes a while, and may prompt for your password when
-installing casks. Without the flag, `install.sh` behaves exactly as it always has:
-symlinks only, fast and offline.
+installing casks. Without the flag, `install.sh` is symlinks only — fast and
+offline, apart from the login shell check below.
 
-One step isn't automated, because it needs your password and changes your login
-shell — make Homebrew's bash the login shell, so you get bash 5.x instead of
-Apple's 3.2 (and with it, working completions):
+## Login shell
 
-```bash
-echo /opt/homebrew/bin/bash | sudo tee -a /etc/shells
-chsh -s /opt/homebrew/bin/bash
-```
+`install.sh` makes Homebrew's bash 5.x the login shell, so you get working
+completions instead of Apple's `/bin/bash` 3.2 and its zsh nag. It runs on every
+invocation, not behind a flag, because **this is not a one-time step — macOS
+updates undo it.** macOS 26.6.2 restored the stock `/etc/shells` and reset the
+login shell to `/bin/bash`, which silently turned the `bash-completion@2` setup in
+`bash_profile` back into a no-op. When the zsh nag reappears in a new terminal,
+that's the symptom; re-run `./install.sh` to repair it.
+
+The check is idempotent and quiet when there's nothing to do. It only reaches for
+`sudo` when `/etc/shells` is actually missing the entry, so a normal run doesn't
+prompt for a password — but the repair run will, twice (`sudo tee`, then `chsh`).
+
+Revert with `chsh -s /bin/bash`. `bash_profile` also sets
+`BASH_SILENCE_DEPRECATION_WARNING=1` unconditionally: only bash 3.2 ever prints
+that warning, so the line looks redundant under 5.x, but it's what keeps the nag
+away in the window between a macOS update and the next `install.sh` run. Don't
+prune it as dead code — it was removed once for exactly that reason.
 
 ## Node and TypeScript
 
