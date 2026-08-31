@@ -25,7 +25,21 @@ if [ "$INSTALL_BREW" = yes ]; then
         echo "--brew was given but Homebrew isn't installed. See https://brew.sh" >&2
         exit 1
     fi
-    "$BREW" bundle install --file="$(pwd)/Brewfile" || exit 1
+    # Some casks install as root: session-manager-plugin is a .pkg, and docker-desktop replaces
+    # privileged helpers under /Library plus binaries in /usr/local/bin. Homebrew warns about that
+    # with "...which may request your password" on *stdout* -- which is exactly what `brew bundle`
+    # hides (see --verbose below) -- so the sudo prompt used to arrive as a bare "Password:" after
+    # minutes of silence, or not visibly at all. Ask once here, where it's obvious what it's for.
+    # Not fatal if it fails: the individual cask steps will still prompt for themselves.
+    echo "Priming sudo -- some casks install as root, and prompting mid-download is easy to miss."
+    sudo -v || echo "  sudo failed -- casks needing root will prompt individually" >&2
+
+    # --verbose, because without it `brew bundle` runs every `brew install` under IO.popen with
+    # stderr folded into stdout, buffers the lot, and prints it *only if the command fails*
+    # (Homebrew/Library/Homebrew/bundle.rb). A multi-gigabyte docker-desktop download therefore
+    # produces zero output for minutes and looks like a hang. --verbose only switches that capture
+    # off; it does not pass --verbose down to brew itself, so the output is normal brew output.
+    "$BREW" bundle install --verbose --file="$(pwd)/Brewfile" || exit 1
 
     # Node comes from the nvm installed just above, and Node ships corepack. corepack reads each
     # project's "packageManager" field and fetches that exact pnpm version, which is why pnpm is
