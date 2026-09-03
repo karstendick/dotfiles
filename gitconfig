@@ -43,6 +43,16 @@ editor = emacs
 [pull]
 rebase = false
 
+# Only adopt an upstream automatically when the remote branch has the same name
+# as the new local branch. The default (true) means `git checkout -b feature
+# origin/main` silently sets feature's upstream to main, which combined with a
+# bare `git push` writes straight to main.
+[branch]
+autoSetupMerge = simple
+
 [push]
-default = upstream
+# simple refuses to push when the upstream's name differs from the current
+# branch's name -- the guardrail against the above. Was `upstream`, which pushes
+# to the upstream's name instead and so has no such check.
+default = simple
 autoSetupRemote = true
