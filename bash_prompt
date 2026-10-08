@@ -199,5 +199,10 @@ PS1+="\n";
 PS1+="\[${white}\]\$ \[${reset}\]"; # `$` (and reset color)
 export PS1;
 
+# Not exported, unlike PS1 above. A non-interactive bash discards an inherited PS2
+# outright, so exporting it gains nothing — but it does make direnv treat PS2 as an
+# app variable and log a spurious `-PS2` on every `.envrc` load, since direnv diffs
+# this shell's environment against one it collected from such a bash. The trade is a
+# plain `>` continuation prompt in a nested interactive bash, which has no ~/.bashrc
+# to re-set it.
 PS2="\[${yellow}\]→ \[${reset}\]";
-export PS2;
