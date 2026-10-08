@@ -87,6 +87,9 @@
       "Bash(aws s3 ls*)",
       "Bash(aws --profile * s3 ls*)",
       "Bash(aws configure list-profiles*)",
+      "Bash(aws secretsmanager get-secret-value --secret-id agencycloud-app*)",
+      "Bash(aws --profile * secretsmanager get-secret-value --secret-id agencycloud-app*)",
+      "Bash(curl * app.aikido.dev/*)",
       "Edit",
       "Write",
       "NotebookEdit",
@@ -97,8 +100,20 @@
     ],
     "defaultMode": "auto"
   },
+  "model": "sonnet",
+  "extraKnownMarketplaces": {
+    "posthog": {
+      "source": {
+        "source": "github",
+        "repo": "PostHog/ai-plugin"
+      }
+    }
+  },
   "alwaysThinkingEnabled": true,
   "showThinkingSummaries": true,
   "theme": "dark",
-  "agentPushNotifEnabled": true
+  "agentPushNotifEnabled": true,
+  "enabledPlugins": {
+    "posthog@posthog": true
+  }
 }
