@@ -7,9 +7,27 @@ NODE_VERSION=22
 usage() {
     echo "Usage: $0 [--brew]" >&2
     echo "  --brew  bootstrap a new machine before symlinking: everything in ./Brewfile, then" >&2
-    echo "          Node $NODE_VERSION via nvm and the pnpm shim via corepack. Needs the network," >&2
-    echo "          takes a while, and upgrades already-installed packages." >&2
+    echo "          Node $NODE_VERSION via nvm, the pnpm shim via corepack, and the VS Code" >&2
+    echo "          extension in ./vscode. Needs the network, takes a while, and upgrades" >&2
+    echo "          already-installed packages." >&2
     exit 1
+}
+
+WORKTREE_LAYOUT_ID=joshua.worktree-layout
+
+# Package vscode/worktree-layout and install it into VS Code. Under --brew because packaging
+# downloads vsce, and because it needs the code CLI and the Claude Code extension it depends on,
+# both of which come from the Brewfile. Re-run --brew after editing the extension to reinstall it.
+install_worktree_layout() {
+    if ! command -v code > /dev/null || ! command -v pnpm > /dev/null; then
+        echo "code or pnpm not on PATH -- skipping $WORKTREE_LAYOUT_ID" >&2
+        return
+    fi
+    local vsix
+    vsix=$(mktemp -d)/worktree-layout.vsix
+    (cd vscode/worktree-layout \
+        && pnpm dlx @vscode/vsce package --allow-missing-repository --skip-license -o "$vsix") \
+        && code --install-extension "$vsix" --force
 }
 
 case "$1" in
@@ -39,7 +57,12 @@ if [ "$INSTALL_BREW" = yes ]; then
     # (Homebrew/Library/Homebrew/bundle.rb). A multi-gigabyte docker-desktop download therefore
     # produces zero output for minutes and looks like a hang. --verbose only switches that capture
     # off; it does not pass --verbose down to brew itself, so the output is normal brew output.
-    "$BREW" bundle install --verbose --file="$(pwd)/Brewfile" || exit 1
+    #
+    # The Brewfile is piped in minus the worktree-layout extension: `brew bundle dump` records it
+    # like any other VS Code extension, but it isn't on the Marketplace, so brew can't fetch it and
+    # the whole install would fail. install_worktree_layout builds it from ./vscode instead.
+    grep -vxF "vscode \"$WORKTREE_LAYOUT_ID\"" Brewfile \
+        | "$BREW" bundle install --verbose --file=- || exit 1
 
     # Node comes from the nvm installed just above, and Node ships corepack. corepack reads each
     # project's "packageManager" field and fetches that exact pnpm version, which is why pnpm is
@@ -56,6 +79,8 @@ if [ "$INSTALL_BREW" = yes ]; then
     else
         echo "nvm not found at $NVM_SH -- skipping Node setup" >&2
     fi
+
+    install_worktree_layout
 fi
 
 LINK_FLAGS="-s"

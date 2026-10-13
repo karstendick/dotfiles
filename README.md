@@ -36,6 +36,8 @@ Install [Homebrew](https://brew.sh) first, then:
 2. `nvm install 22`, `nvm alias default 22`, and `corepack enable pnpm`, so
    Node/TypeScript work is ready too. The version is the `NODE_VERSION` variable at
    the top of `install.sh`.
+3. Packaging `vscode/worktree-layout` and installing it into VS Code — see
+   [VS Code worktree layout](#vs-code-worktree-layout).
 
 It needs the network, takes a while, and may prompt for your password when
 installing casks. Without the flag, `install.sh` is symlinks only — fast and
@@ -110,3 +112,21 @@ outdated package as unsatisfied, which buries the genuinely missing ones.
 Note that `brew bundle install` upgrades already-installed packages by default;
 pass `--no-upgrade` if you don't want that. Avoid `brew bundle cleanup --force`
 unless you mean it — it uninstalls anything *not* listed in the `Brewfile`.
+
+## VS Code worktree layout
+
+`vscode/worktree-layout` is a small personal VS Code extension. When a window opens
+on a folder with nothing restored — a fresh git worktree, in practice — it hides
+both sidebars, opens `README.md` on the left, and opens a Claude Code tab on the
+right. A window you've used before restores its own tabs and is left alone. It also
+sets `workbench.startupEditor` to `none` if you haven't set it, since the Welcome
+page would otherwise count as an open tab and stop the layout.
+
+It isn't on the Marketplace, so `install.sh --brew` packages it with `vsce` and
+installs the `.vsix`. After editing it, bump `version` in its `package.json` and
+re-run `./install.sh --brew`.
+
+`brew bundle dump` still records it as `vscode "joshua.worktree-layout"`, and the
+line stays, so the Brewfile remains a plain dump. `install.sh` filters that one line
+out before `brew bundle install`, which would otherwise fail trying to fetch it.
+`brew bundle check` reports it as satisfied once it's installed.
