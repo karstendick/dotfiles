@@ -100,7 +100,7 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "sonnet",
+  "model": "opus",
   "extraKnownMarketplaces": {
     "posthog": {
       "source": {
