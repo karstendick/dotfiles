@@ -1,6 +1,6 @@
 ---
 name: start-ticket
-description: Start work on a Linear ticket — read it, check for open blockers, create a git worktree on the ticket's branch, and move it to In Progress. Use when asked to start, pick up, or kick off work on a ticket.
+description: Start work on a Linear ticket — read it, check for open blockers, create a git worktree on the ticket's branch, move it to In Progress, and assign it to me. Use when asked to start, pick up, or kick off work on a ticket.
 ---
 
 # Start Ticket Skill
@@ -45,13 +45,22 @@ description: Start work on a Linear ticket — read it, check for open blockers,
    `fetch` or `pull` on the user's behalf, and do not touch local `main` at all. If local
    `main` is behind, that is now irrelevant rather than a question — mention it only if the
    user needs it for something else.
-7. Move the ticket to **In Progress** with `save_issue` — unless it is already there, in
-   which case say so instead of writing a no-op update.
+7. Move the ticket to **In Progress** and assign it to the user (Joshua Karstendick) in a
+   single `save_issue` call, passing `assignee: "me"`. Leave out whichever half is already
+   true, and skip the call entirely if both are, saying so instead of writing a no-op
+   update. If the ticket is assigned to someone else, do not reassign it: still set the
+   status, and name the current assignee in your report so the user can decide.
+
+   **Check the response, not just that the call succeeded.** `save_issue` can accept a state
+   *name* and silently leave the status unchanged. If the returned `status` is not
+   In Progress, look up the team's statuses with `list_issue_statuses` and retry with the
+   In Progress status's `id`.
 8. **Stop there, and stop quickly.** Do not install dependencies, build packages, or create
    any env file — the user handles setup himself with `direnv allow` and `pnpm dev`, and it
    works in a fresh worktree. A finished run of this skill is a handful of tool calls: read
-   the ticket, check the siblings, `git worktree add`, set the status.
-9. Report the worktree path, the branch, the Linear status, and any unresolved blocker —
+   the ticket, check the siblings, `git worktree add`, set the status and assignee.
+9. Report the worktree path, the branch, the Linear status, the assignee, and any
+   unresolved blocker —
    nothing else. No scope summary, no implementation sketch, no file list, no plan. The
    user runs the `spec` skill from the new worktree next; leave the thinking to it, and do
    not begin implementing.

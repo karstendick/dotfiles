@@ -1,6 +1,6 @@
 ---
 name: weekly-summary
-description: Summarize what the team shipped over a period (default: last 7 days) by cross-referencing merged GitHub PRs, completed Linear issues, and direct commits to main. Use when asked to summarize shipped work, write a weekly recap, or report on team accomplishments.
+description: Summarize what the team shipped over a period (default: last 7 days) by cross-referencing merged GitHub PRs and completed Linear issues, plus the security findings addressed by severity from the daily Security Report runs. Use when asked to summarize shipped work, write a weekly recap, or report on team accomplishments.
 ---
 
 # Weekly Shipped-Work Summary
@@ -41,41 +41,34 @@ mcp__linear-server__list_issues
 
 A reopened-and-recompleted ticket gets a new `completedAt` and will legitimately appear in a second week. If you spot one already reported, note that it was re-completed rather than listing it as new.
 
-## 4. Direct commits to main — do not skip this
+Main is protected against direct pushes, so merged PRs are the only way code ships. There is no commit-log step.
 
-Real product work lands outside PRs and would otherwise go unreported. A run on Aug 17 found `02697a4`, a stale-credential fix in the auth context and API client, invisible in both the PR list and Linear.
-
-```bash
-git log --since='<START minus 1 day>' \
-  --pretty=format:'%h|%an|%ad|%s' --date=iso origin/main | grep -v '(#[0-9]*)$'
-```
-
-- The repo squash-merges, so PR commits end in `(#123)`. `grep -v` on that leaves direct commits, merge commits, and anything else unaccounted for.
-- **Widen `--since` by a day, then discard the overshoot — both halves are mandatory.** `--since=YYYY-MM-DD` has silently dropped commits that were inside the window (it dropped `bec41c1`/#247 on a same-day boundary), so over-fetching is necessary. But keeping the overshoot re-reports the prior day, which is exactly the double-count the half-open window exists to prevent. After the `grep`, drop every commit outside `[START, END)` before triaging.
-- Run `git show --stat <sha>` on each hit and triage:
-  - **Product code** → shipped work. Fold it into the relevant project section, cited by SHA instead of PR number.
-  - **Docs and specs** → mention only if they're a deliverable someone asked for.
-  - **Local tooling and config** (`.envrc`, editor settings) → omit.
-  - **Merge commits** → not new work; omit.
-- **Verify local history is current, or work around it.** Compare `git rev-parse origin/main` against the remote tip:
-
-  ```bash
-  gh api repos/AGIHoldings/monorepo/commits/main --jq '.sha + "  " + .commit.committer.date'
-  ```
-
-  If local is behind, read the window's history from the API instead of `git log` — don't fetch unless asked:
-
-  ```bash
-  gh api "repos/AGIHoldings/monorepo/commits?sha=main&since=<START>T00:00:00Z&per_page=100" \
-    --jq '.[] | [.sha[0:7], .commit.author.name, .commit.author.date,
-                 (.commit.message | split("\n")[0])] | @tsv' | grep -vE '\(#[0-9]+\)$'
-  ```
-
-  A stale ref was 4 days behind on Aug 31. This failure mode *under*-reports rather than double-counts: work missed here falls outside next week's window too, so it is dropped permanently and never shows up again. Say in the output which source you used.
-
-## 5. Cross-reference both directions
+## 4. Cross-reference both directions
 
 Ticket↔PR linkage is lossy, and getting it wrong misattributes or drops work. Verified failure modes: a PR whose title omitted the `[AGI-xxx]` prefix despite mapping to a real ticket (#252 → AGI-249); a ticket with no assignee whose PR had one (AGI-231 → #249); one PR closing several tickets (#259 → AGI-242 + AGI-237). Reconcile the two lists against each other; don't infer linkage from titles alone.
+
+Tickets closed with no PR are still real (configuration, evidence documents, decisions, old tickets closed out). List them, and say they had no PR rather than guessing one.
+
+## 5. Security findings addressed, by severity
+
+Leadership wants the Compliance work reported as "X Critical, Y High, Z Medium, W Low addressed", not as a description of the fixes. Get the numbers from the monorepo's Security Report workflow, which runs daily plus on manual dispatch. Each run's job log prints that day's table of open findings, one row per finding, with its severity and exposure tier.
+
+```bash
+gh run list --repo AGIHoldings/monorepo --workflow security-report.yml --limit 60 \
+  --json databaseId,createdAt,conclusion,event
+gh run view <id> --repo AGIHoldings/monorepo --log
+```
+
+Read every run in `[START, END)`, plus the last run before `START` for the starting state. A finding was addressed if it is in one run's table and gone from the next run's. Add those up by severity for the whole week.
+
+- **Read every run, not just the first and last.** A finding can open and close between two daily runs. The two Next.js criticals on 2026-10-15 did exactly that, and a start-versus-end comparison would have missed them.
+- **Use the tables, not the "Movement since" section.** That section stops listing after ten entries, gives no severity totals, and compares only two snapshots a week apart.
+- **Count only findings in the "current" tier.** That tier covers running images, the cloud and the repo. A finding seen only on "old" (retired) images that drops off was not fixed this week.
+- **Count each advisory once.** The same CVE often appears twice, once against the package and once against `pnpm-lock.yaml`, from two scanners. Count it once, at the higher severity.
+- **Match each addressed finding to a Compliance ticket or PR from the week.** If a finding has no fix behind it, it was probably ignored or snoozed in Aikido. Leave it out, or footnote it if the fix shipped and Aikido closed it without a retest, as happened with the login rate-limit finding after AGI-598.
+- **Report the state at the end of the week too:** open findings by severity in the last run before `END`, and whether the report held at zero. It has been at zero since 2026-10-20, so "found and fixed the same day" is the notable thing to say.
+
+Put this in the Compliance section as one line, for example: "**Security findings addressed: 0 Critical, 5 High, 3 Medium, 2 Low.** Open at end of week: none."
 
 ## 6. Output
 
@@ -91,6 +84,11 @@ Line counts, contributors with per-author PR counts.
 
 ### <Project name> (<N> PRs, <N> tickets)
 - **[AGI-xxx]** What shipped and why it matters (#PR)
+
+### Compliance (<N> PRs, <N> tickets)
+**Security findings addressed: <N> Critical, <N> High, <N> Medium, <N> Low.**
+Open at end of week: <counts by severity, or none>.
+- **[AGI-xxx]** …
 
 ### Themes
 2–4 numbered observations that only emerge from seeing the whole week — cross-project

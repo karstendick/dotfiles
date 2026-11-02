@@ -74,9 +74,9 @@ Use the argument as `$ARGUMENTS` if provided.
    gh pr create --base main --title "<title>" --body-file <path>
    ```
 
-   Never commit or stage on the user's behalf to make a PR possible. If the working tree still has
-   uncommitted changes that belong in this PR, say so and let the user commit them before you
-   create it.
+   Never commit or stage on the user's behalf. Uncommitted changes are not a reason to hold the PR:
+   open it from what is already committed, and mention the uncommitted files in the report so the
+   user can commit and push them later.
 
 6. **Report** — show the user the PR URL when done, and say which path you took: created a new PR,
    or updated an existing one.
