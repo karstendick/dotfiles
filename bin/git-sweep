@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+# git sweep: remove local branches and worktrees whose GitHub PR is merged or closed.
+#
+# Lists what it would remove; `git sweep --apply` removes it. Run from anywhere in the repo.
+#
+# A branch is stale only when its PR is merged or closed and no PR for it is open.
+# Having no upstream is not stale: a fresh worktree off origin/main has none.
+# The repo squash-merges, so `git branch --merged` can't tell, and GitHub deletes the
+# head branch on merge, so after `fetch --prune` a merged branch's commits are on no
+# remote ref. The lost-work check therefore compares the branch tip with the PR's head.
+#
+# Always kept: the default branch, the worktree you are in, worktrees with uncommitted or
+# untracked changes, locked worktrees, and branches with commits beyond their PR's head.
+
+set -euo pipefail
+
+apply=false
+case "${1:-}" in
+    --apply) apply=true ;;
+    "") ;;
+    -h) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) echo "usage: git sweep [--apply]" >&2; exit 2 ;;
+esac
+
+default_branch=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || echo origin/main)
+default_branch=${default_branch#origin/}
+main_wt=$(git worktree list --porcelain | sed -n '1s/^worktree //p')
+here=$(git rev-parse --show-toplevel)
+
+# One line per PR, newest first: branch, state, number, head commit. Forks are left out,
+# since their branch names say nothing about ours.
+prs=$(gh pr list --state all --limit 5000 \
+    --json number,state,headRefName,headRefOid,isCrossRepository \
+    --jq '.[] | select(.isCrossRepository | not) | [.headRefName, .state, .number, .headRefOid] | @tsv')
+
+# Prints "STATE NUMBER OID" for the branch: an open PR if it has one, else its newest.
+pr_for() {
+    awk -F'\t' -v b="$1" '
+        $1 == b && $2 == "OPEN" { print $2, $3, $4; found = 1; exit }
+        $1 == b && !first { first = $2 " " $3 " " $4 }
+        END { if (!found && first) print first }' <<<"$prs"
+}
+
+# Succeeds if the branch is stale. Either way, leaves the explanation in $reason.
+reason=""
+is_stale() {
+    local branch=$1 pr state number oid tip label
+    pr=$(pr_for "$branch")
+    if [ -z "$pr" ]; then reason="no PR"; return 1; fi
+    read -r state number oid <<<"$pr"
+    case $state in
+        OPEN) reason="PR #$number is open"; return 1 ;;
+        MERGED) label="PR #$number merged" ;;
+        *) label="PR #$number closed" ;;
+    esac
+    tip=$(git rev-parse "refs/heads/$branch")
+    if [ "$tip" != "$oid" ] \
+        && ! { git cat-file -e "$oid^{commit}" 2>/dev/null && git merge-base --is-ancestor "$tip" "$oid"; } \
+        && [ -n "$(git rev-list -1 "$tip" --not --remotes)" ]; then
+        reason="$label, but the branch has commits that aren't in it"
+        return 1
+    fi
+    reason=$label
+}
+
+remove_wts=() remove_branches=() removals=() keeps=()
+in_worktrees=""
+
+consider_worktree() {
+    [ -n "$wt" ] || return 0
+    [ -n "$branch" ] && in_worktrees+=$'\n'"$branch"
+    [ "$wt" = "$main_wt" ] && return 0
+    local name="${wt##*/} ($branch)"
+    if [ -z "$branch" ]; then
+        keeps+=("${wt##*/}: detached HEAD")
+    elif [ ! -d "$wt" ]; then
+        keeps+=("$name: directory is gone; \`git worktree prune\` clears it")
+    elif $locked; then
+        keeps+=("$name: locked")
+    elif [ "$wt" = "$here" ]; then
+        keeps+=("$name: you are in it")
+    elif ! is_stale "$branch"; then
+        keeps+=("$name: $reason")
+    elif [ -n "$(git -C "$wt" status --porcelain)" ]; then
+        keeps+=("$name: $reason, but it has uncommitted changes")
+    else
+        remove_wts+=("$wt")
+        remove_branches+=("$branch")
+        removals+=("$name: $reason")
+    fi
+}
+
+wt="" branch="" locked=false
+while IFS= read -r line; do
+    case $line in
+        "worktree "*) wt=${line#worktree } branch="" locked=false ;;
+        "branch refs/heads/"*) branch=${line#branch refs/heads/} ;;
+        locked*) locked=true ;;
+        "") consider_worktree; wt="" ;;
+    esac
+done < <(git worktree list --porcelain; echo)
+
+for b in $(git for-each-ref --format='%(refname:lstrip=2)' refs/heads/); do
+    [ "$b" = "$default_branch" ] && continue
+    grep -Fxq -- "$b" <<<"$in_worktrees" && continue
+    if is_stale "$b"; then
+        remove_wts+=("")
+        remove_branches+=("$b")
+        removals+=("$b: $reason")
+    else
+        keeps+=("$b: $reason")
+    fi
+done
+
+if [ ${#keeps[@]} -gt 0 ]; then
+    echo "Keeping:"
+    printf '  %s\n' "${keeps[@]}"
+fi
+if [ ${#removals[@]} -eq 0 ]; then
+    echo "Nothing to sweep."
+    exit 0
+fi
+echo "$($apply && echo Removing || echo "Would remove"):"
+printf '  %s\n' "${removals[@]}"
+if ! $apply; then
+    echo "Run \`git sweep --apply\` to remove them."
+    exit 0
+fi
+
+failed=0
+for i in "${!remove_branches[@]}"; do
+    if [ -n "${remove_wts[$i]}" ] && ! git worktree remove "${remove_wts[$i]}"; then
+        failed=1
+        continue
+    fi
+    git branch -D --quiet "${remove_branches[$i]}" || failed=1
+done
+exit $failed
