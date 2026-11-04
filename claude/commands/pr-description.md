@@ -12,6 +12,7 @@ The user may provide:
 - A PR number (e.g., `148`)
 - A PR URL (e.g., `https://github.com/org/repo/pull/148`)
 - Nothing — in which case, infer the PR from the current branch using `gh pr view --json number`
+- `--draft`, alongside any of the above: create a new PR as a draft
 
 Use the argument as `$ARGUMENTS` if provided.
 
@@ -54,10 +55,14 @@ Use the argument as `$ARGUMENTS` if provided.
    - Be concise. Reviewers skim.
    - Group related changes; don't just list commits.
    - If the diff is mostly mechanical (formatting, renames), say so explicitly and point reviewers to the substantive changes.
-   - Do NOT include a "Generated with Claude Code" footer.
 
-4. **Derive the title** — a concise title from the branch name and commits:
-   - Format: `[TICKET-ID] Short description` if a Linear/Jira ticket ID is detectable in the branch name (e.g. `agi-69` → `AGI-69`)
+4. **Derive the title** — a concise title from the ticket and commits:
+   - Format: `[TICKET-ID] Short description` when the work has a Linear/Jira ticket. Look for
+     the ID, in this order: the ticket the conversation is about, a spec on the branch named
+     `docs/specs/<ticket-id>-….md`, then the branch name (e.g. `agi-69` → `AGI-69`). Branches
+     Claude creates for its own worktrees are named `worktree-…` and usually carry no ID, so
+     don't rely on the branch alone. The bracketed ID is also what links the PR to the ticket
+     in Linear.
    - Otherwise: a plain short title (under 70 characters)
 
 5. **Upload** — write the body to `/tmp/pr-<number>-body.md`, or `/tmp/pr-<branch>-body.md` when
@@ -74,9 +79,12 @@ Use the argument as `$ARGUMENTS` if provided.
    gh pr create --base main --title "<title>" --body-file <path>
    ```
 
-   Never commit or stage on the user's behalf. Uncommitted changes are not a reason to hold the PR:
-   open it from what is already committed, and mention the uncommitted files in the report so the
-   user can commit and push them later.
+   If the arguments include `--draft`, as `/implement` passes them, add `--draft` to
+   `gh pr create`.
+
+   This command describes what is committed; it doesn't commit. `/implement` commits before it
+   runs these steps. Uncommitted changes are not a reason to hold the PR: open it from what is
+   already committed, and mention the uncommitted files in the report.
 
 6. **Report** — show the user the PR URL when done, and say which path you took: created a new PR,
    or updated an existing one.

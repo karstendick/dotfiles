@@ -29,3 +29,15 @@ alias emacs='emacs -nw'
 alias tf='terraform'
 
 alias psqllocal='psql "${DATABASE_URL%%\?*}"'
+
+# Bare `claude` opens agent view with dispatch defaults: sessions start in plan mode on
+# opusplan (Opus while planning, Sonnet once a plan is approved). Agent view has no settings
+# key for these, only flags. Anything with arguments runs claude unchanged.
+# Agent view's /resume refuses a view opened with these flags; run `command claude agents`.
+claude() {
+  if [ $# -eq 0 ]; then
+    command claude agents --model opusplan --permission-mode plan
+  else
+    command claude "$@"
+  fi
+}

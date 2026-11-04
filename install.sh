@@ -177,6 +177,7 @@ symlink pip.conf ~/.config/pip/pip.conf
 mymkdir ~/.claude
 symlink claude/settings.json ~/.claude/settings.json
 symlink claude/CLAUDE.md ~/.claude/CLAUDE.md
+symlink claude/loop.md ~/.claude/loop.md
 dirlink claude/commands ~/.claude/commands
 dirlink claude/skills ~/.claude/skills
 
