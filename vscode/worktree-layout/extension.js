@@ -23,12 +23,18 @@ async function activate() {
 
 	await vscode.commands.executeCommand("workbench.action.closeSidebar");
 	await vscode.commands.executeCommand("workbench.action.closeAuxiliaryBar");
-	await vscode.window.showTextDocument(readme, {
-		viewColumn: vscode.ViewColumn.One,
-		preview: false,
-	});
+	const showReadme = () =>
+		vscode.window.showTextDocument(readme, {
+			viewColumn: vscode.ViewColumn.One,
+			preview: false,
+		});
+	await showReadme();
 	// With no column argument, Claude Code starts its own (locked) group beside the active one.
 	await vscode.commands.executeCommand("claude-vscode.editor.open");
+	// Hand focus back to the README. Without this, windows laid out here could end up with editor
+	// commands (Cmd+Left/Right, copy) running against some other editor than the one with DOM focus,
+	// until a reload.
+	await showReadme();
 }
 
 module.exports = { activate };
