@@ -2,6 +2,7 @@
 name: implement
 description: Implement an approved spec end to end — commit, push, open a draft PR with a description, and fix CI until every check is green — then mark the PR ready. Use when the user approves a spec and asks to implement it.
 disable-model-invocation: true
+model: sonnet
 ---
 
 # Implement Skill

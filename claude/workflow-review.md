@@ -26,9 +26,9 @@ code. Several features below address those directly; that's where I'd start.
    1-hour prompt cache. Fixes the 503 silences and most classifier blocks.
 2. **One iTerm2 window:** install iTerm2's built-in Claude Code integration and run
    `claude agents` (agent view) as the hub. Drop VS Code from the loop.
-3. **Grill, then spec:** do the design as a plan-mode conversation, then write a *shorter*
-   spec that records what we decided. Plan mode makes "questions aren't work orders" a
-   guarantee instead of an instruction.
+3. **Grill, then spec:** do the design as a conversation, one question at a time
+   (`/grill-me`), then write a *shorter* spec that records what we decided.
+   Implementation runs on Sonnet.
 4. **Review on GitHub, let Claude work the comments:** open a draft PR when implementation
    is green, have Claude's review comments land first (managed Code Review after a capped pilot, or
    the local `/code-review --comment`), review line by line on
@@ -117,25 +117,17 @@ it in its own tab with `claude attach <name>` and get the iTerm2 Workgroup's Dif
 installed). It's reversible through an Uninstall menu item, and its Cockpit covers whatever
 ends up in tabs.
 
-### Dispatch defaults: a `claude` shell function
+### Opening agent view **(done 2026-11-04)**
 
-Agent view takes defaults for every session it dispatches, but **only as flags** on
-`claude agents`: `--model`, `--permission-mode`, `--effort`, `--agent`
-([docs](https://code.claude.com/docs/en/agent-view.md#dispatch-defaults)).
-- There's no settings key for them.
-- `/model` typed into the dispatch input lasts only for that window.
-- `defaultToAgentsView` opens agent view from a bare `claude`, but without the flags.
+`defaultToAgentsView: true` (in `~/.claude.json`, also settable with `/config`) makes a bare
+`claude` open agent view. Dispatched sessions start like any new session: on Opus, my
+`model` setting, in auto mode. Anything with arguments (`claude -p …`, `claude --resume …`)
+runs as before.
 
-So I don't have to remember the flags, a `claude` function in my dotfiles `bash_aliases`
-runs `claude agents --model opusplan --permission-mode plan` when I type `claude` with no
-arguments. Anything with arguments (`claude -p …`, `claude --resume …`) passes through
-unchanged, on Opus and auto mode. **(done 2026-11-04)** One quirk: agent view's `/resume`
-refuses a view opened with flags, so to bring back a deleted session I run
-`command claude agents` instead.
-
-Every dispatched session then starts in plan mode on Opus. That suits more than ticket
-work: an alarm investigation or a "could we…?" starts read-only too, and nothing changes
-until I approve a plan or press Shift+Tab.
+Agent view does take dispatch defaults, but only as flags on `claude agents` (`--model`,
+`--permission-mode`, `--effort`, `--agent`; there's no settings key for them). I briefly
+used a `claude` shell function to pass `--model opusplan --permission-mode plan`, and
+dropped it with plan mode (§3).
 
 ### What I lose by dropping VS Code **(done 2026-11-04)**
 
@@ -159,16 +151,17 @@ I'd keep VS Code installed for occasional browsing, not as part of the loop.
   > decisions one by one. If a question can be answered by exploring the codebase, explore
   > the codebase instead. For each question, provide your recommended answer.
 
-  The current version batches the answerable questions each round, each with a
-  recommendation, and looks facts up itself so it only asks about decisions. It takes no
+  His later version batches the answerable questions each round. I tried that and rejected
+  it on the first real ticket (2026-11-04): six questions at once lose the one-by-one
+  dependency walk, so my `/grill-me` asks one question per message. Like his, it looks facts
+  up itself so it only asks about decisions. It takes no
   action until I confirm. His flow is *grill → `/to-spec` (synthesis only, no new
   questions) → tickets → implement*.
 - **Plan mode** (`Shift+Tab`, `/plan`, `--permission-mode plan`). Claude can read and run
-  exploration commands but **cannot edit files** until I approve the plan. The plan is
-  saved under `~/.claude/plans/` (or `plansDirectory`), and `Ctrl+G` opens it in an editor.
-  On approval I choose auto mode, manual edits, or keep planning; an option can clear
-  context. `opusplan` is a separate *model* alias (Opus plans, Sonnet executes), not a
-  plan-mode setting. [Docs](https://code.claude.com/docs/en/permission-modes.md)
+  exploration commands but **cannot edit files** until I approve the plan. `opusplan` is a
+  *model* alias that runs Opus in plan mode and Sonnet otherwise.
+  [Docs](https://code.claude.com/docs/en/permission-modes.md) I tried both and dropped them
+  from the ticket workflow; see below.
 
 ### Why this matters for me
 
@@ -176,40 +169,55 @@ I'd keep VS Code installed for occasional browsing, not as part of the loop.
 conversation and the second is a document, and doing both in one shot is where the padding
 comes from. Claude writes 450 lines of conclusions before I've weighed in, and then I trim.
 
-Plan mode also turns my most-repeated correction into something enforced. In plan mode,
-a "could we…?" *can't* become a branch and a commit, because edits are blocked until I
-approve.
-
 ### Proposed flow
 
-Sessions dispatched from agent view start in plan mode on `opusplan` (§2), so the judgment
-happens on Opus and the implementation on Sonnet, which costs half as much.
+The session runs on Opus. `/implement` pins Sonnet for its own run.
 
-1. `/grill-me` runs in plan mode on Opus. Claude reads the ticket and code, then asks a batch
-   of questions, each with a recommendation. I answer, often just "yes".
-2. When no branch is open, Claude presents the shared-understanding summary as the plan.
-   Approving the plan (Enter on the first option, which is auto mode) confirms the summary, leaves plan mode, and
-   switches the session to Sonnet. In plan mode, `/grill-me` presents its summary as the
-   plan, so approving it is the confirmation. **(done 2026-11-04)**
+1. `/grill-me` on Opus. Claude reads the ticket and code, then asks one question at a time,
+   each with a recommendation. I answer, often just "yes", and the next question builds on
+   that answer.
+2. When no branch is open, Claude summarizes the shared understanding and I confirm it in
+   conversation.
 3. `/spec` writes a decision record to `docs/specs/<id>-<slug>.md` from the confirmed summary:
    decisions with reasons, scope, `path:line` files, verification commands, and any Open
-   Questions that are still open. No new content, mirroring Pocock's `/to-spec`. Writing it
+   Questions I chose to leave open. No new content, mirroring Pocock's `/to-spec`. Writing it
    is the session's first edit, so this is when Claude moves into its own worktree (§5).
-4. Review the spec, then `/implement`. Sonnet implements with the whole grilling conversation
+4. Review the spec, then `/implement`. It runs on Sonnet with the whole grilling conversation
    in context, so the spec doesn't have to restate it.
 
-**Why `opusplan` rather than a handoff (2026-11-04).**
+**Plan mode: tried and dropped (2026-11-04).** It was meant to do two things:
+- **Make grilling read-only:** a "could we…?" couldn't become a branch and a commit.
+- **Route models:** through `opusplan`, Opus for the thinking and Sonnet for the doing.
+
+On the first real ticket it got in the way twice. It blocked `/start-ticket`'s In Progress
+update, and then it blocked filing a follow-up ticket mid-grilling. It also forced the
+grilling summary to pose as a "plan" to get through the approval step.
+
+The read-only guarantee matters less than it did, because the harm it guarded against is now
+contained:
+- `git-guard.sh` blocks commits on `main`.
+- A background session's edits land in its own worktree.
+- Nothing ships except through a PR I review.
+
+`/grill-me`'s "change nothing in the code" rule covers the rest, and it explicitly allows
+Linear writes I ask for. For a read-only investigation, I still type `/plan <question>`
+by hand.
+
+**Opus for the thinking, Sonnet for the implementation (2026-11-04).**
 - **Price:** I measured Opus 5.5 at exactly 2x Sonnet 5.5 on our Bedrock account: $0.193 vs
   $0.096 for the same prompt.
 - **What we actually run:** October's `agi-dev` Claude usage was $1,703 on Opus and $24 on
   Sonnet. That's the whole team, and it's covered by AWS credits. So the planned split into
-  an Opus plan and a Sonnet implementation from a self-contained spec almost never happened.
-- **The result:** we paid for long self-contained specs without collecting the savings.
-- **Tested on Bedrock:** `opusplan` routes plan mode to `us.anthropic.claude-opus-5-5` and
-  everything else to `us.anthropic.claude-sonnet-5-5`.
-- **Costs:** each model has its own prompt cache, so the first Sonnet turn after the switch
-  is uncached. And when implementation hits something the plan didn't foresee, Sonnet makes
-  the call. Tests, `/goal` and review on GitHub are the backstop.
+  an Opus plan and a Sonnet implementation from a self-contained spec almost never happened,
+  and we paid for long self-contained specs without collecting the savings.
+- **How:** `/implement` has `model: sonnet` in its frontmatter. A skill's model applies for
+  the rest of the turn that invokes it ([docs](https://code.claude.com/docs/en/skills.md)),
+  and `/implement` runs mostly as one long turn. Grilling and `/spec` stay on Opus.
+- **Unverified:** once the background CI watch finishes, Claude may continue in a new turn,
+  back on Opus. If Cost Explorer shows little Sonnet, that's why.
+- **Costs:** each model has its own prompt cache, so the first Sonnet turn is uncached. And
+  when implementation hits something the plan didn't foresee, Sonnet makes the call. Tests,
+  CI and review on GitHub are the backstop.
 
 **The handoff exception: `/spec --handoff`.** Use it when implementation should run as a
 separate background session while I move on, for example
@@ -229,13 +237,12 @@ baseline above). If Sonnet's share hasn't grown, the split still isn't happening
 - **Should `/spec` stay "self-contained for a fresh session"?** **(done 2026-11-04: a
   decision record by default, with `--handoff` for self-contained)** That rule is the main
   reason specs are long, since it has to restate everything the investigation learned. It
-  existed so a cheaper model could implement from the spec alone; `opusplan` gets that split
-  within one session instead (see above). `/spec` also now builds from a confirmed
-  `/grill-me` summary, sends anything not in it to Open Questions, and refuses to write while
-  the session is still in plan mode.
+  existed so a cheaper model could implement from the spec alone; `/implement` running on
+  Sonnet in the same session gets that split instead (see above). `/spec` also now builds
+  from a confirmed `/grill-me` summary and sends anything not in it to Open Questions.
 - **Plan file vs. `docs/specs/`.** Plan-mode plans aren't committed and have generated
   names; my specs are a committed record. Keep `docs/specs/` as the record and treat the
-  plan as scratch.
+  plan as scratch. _Moot: plan mode left the ticket workflow on 2026-11-04._
 
 ## 4. Review on GitHub; let Claude work the comments
 
@@ -485,9 +492,9 @@ Each phase is small and reversible, and I'd live with each for a few days before
 | --- | --- | --- |
 | 0 | Quick-win settings (§1) | Fewer classifier blocks; the next Bedrock outage falls back instead of going silent |
 | 1 | iTerm2 integration + agent view, existing worktrees, no skill changes (§2) **(done 2026-11-04)** | A week without opening VS Code for Claude work |
-| 2 | `/grill-me` skill (done 2026-11-04); `/spec` rewritten as a decision record with `--handoff` (done 2026-11-04); `opusplan` + plan mode for design (§3) | Next three specs arrive without trimming; Sonnet's share of Bedrock spend grows |
+| 2 | `/grill-me` skill (done 2026-11-04); `/spec` rewritten as a decision record with `--handoff` (done 2026-11-04); `/implement` on Sonnet (§3) (done 2026-11-04) | Next three specs arrive without trimming; Sonnet's share of Bedrock spend grows |
 | 3 | `/implement` → draft PR → green CI → ready (done 2026-11-04); review on GitHub with `/loop` (§4) | One spec shipped by `/implement` to a green PR, reviewed on GitHub, and fixed by the loop |
-| 4 | `claude` shell function for dispatch defaults (§2); `/grill-me` ends by presenting the plan; `/start-ticket` cut to its Linear half; `/pr-description` takes the ticket ID from the spec; `/implement` worktree check, `pnpm install`, no local e2e (§3, §5) **(done 2026-11-04)** | One `/start-ticket AGI-123` dispatched from agent view reaches a green, ready PR with no worktree commands from me |
+| 4 | `defaultToAgentsView` so a bare `claude` opens agent view (§2); `/start-ticket` cut to its Linear half; `/pr-description` takes the ticket ID from the spec; `/implement` worktree check, `pnpm install`, no local e2e (§3, §5) **(done 2026-11-04)** | One `/start-ticket AGI-123` dispatched from agent view reaches a green, ready PR with no worktree commands from me |
 
 ## Verify first
 
@@ -505,7 +512,9 @@ Spikes to settle the **(unverified)** points, each a few minutes:
    now edits there (§5). (Phase 4)
 8. Does a background session started in plan mode show its plan approval under *Needs input*,
    and does approving it from an attached session switch `opusplan` to Sonnet as it does in
-   a foreground session? (Phase 4)
+   a foreground session? _Resolved: moot. Plan mode left the ticket workflow (§3)._
+   Replaced by: does `/implement`'s `model: sonnet` cover the CI-fixing turns, or only the
+   first one? Check the session's model use, or Cost Explorer. (Phase 3)
 9. Does the session move into its worktree before `/spec` writes, so the spec lands on the
    PR branch rather than in the primary checkout? (Phase 4)
 10. Does a background session see `.envrc`'s environment (Bedrock, AWS profile, app secrets)?
@@ -525,8 +534,8 @@ Spikes to settle the **(unverified)** points, each a few minutes:
    ticket that another session picks up.
    _Resolved 2026-11-04: decision record by default, with `--handoff` for self-contained.
    The self-contained format existed so Sonnet could implement from the spec, but October
-   spend was $1,703 Opus vs $24 Sonnet, so that rarely happened. `opusplan` does the split in
-   one session instead (§3)._
+   spend was $1,703 Opus vs $24 Sonnet, so that rarely happened. `/implement` runs on
+   Sonnet in the same session instead (§3)._
 2. **Sibling vs. nested worktrees?** *Recommendation:* keep siblings via the hook (§5 C).
    Nested ones risk tooling surprises and gain nothing I need.
    _Resolved 2026-11-04: nested, wherever Claude puts them. I no longer interact with
@@ -551,15 +560,15 @@ Spikes to settle the **(unverified)** points, each a few minutes:
 
 How a ticket goes from now on.
 
-1. **Open agent view:** type `claude` in `~/git/monorepo`. Dispatched sessions start in plan
-   mode on `opusplan`.
-2. **Dispatch the ticket:** `/start-ticket AGI-123`. It sets the Linear status and
-   assignee, checks blockers, and goes straight into `/grill-me`.
-3. **Get grilled:** answer each batch of questions, often just "yes". This runs on Opus and
-   read-only. Agent view's *Needs input* group and the iTerm2 notification tell me when a
-   batch is waiting, so I can work other tickets in between.
-4. **Approve the summary:** Claude presents the shared understanding as the plan. I approve
-   the plan (Enter on the first option), and the session switches to auto mode on Sonnet.
+1. **Open agent view:** type `claude` in `~/git/monorepo`.
+2. **Dispatch the ticket:** `/start-ticket AGI-123`. It checks blockers, sets the ticket In
+   Progress and assigned to me straight away, then goes into `/grill-me`.
+3. **Get grilled:** answer the questions one at a time, often just "yes". This runs on Opus
+   and changes no code; I can still ask for Linear writes, like filing a follow-up ticket.
+   Agent view's *Needs input* group and the iTerm2 notification tell me when the next
+   question is waiting, so I can work other tickets in between.
+4. **Confirm the summary:** Claude summarizes what we decided, and I confirm it in
+   conversation.
 5. **Spec:** `/spec` writes the decision record, and Claude moves into its own worktree. I
    read it to check it matches what we decided. It should have no Open Questions beyond any I chose to leave open.
 6. **Ship:** run `/implement`, which is my approval of the spec. Claude commits, opens a draft PR, and
@@ -573,5 +582,6 @@ How a ticket goes from now on.
    session's row, which deletes the session and its worktree. Or let finished sessions
    collect under *Completed* and clear them all at once with `Ctrl+X` on that group's header.
 
-**Other sessions** (alarm triage, "could we…?" questions) start the same way: type `claude`,
-then dispatch the question. They stay read-only until I approve a plan or press Shift+Tab.
+**Other sessions** (alarm triage, "could we…?" questions): dispatch the question from agent
+view; it runs on Opus in auto mode. To make one read-only, prefix it with `/plan`, for
+example `/plan why did the frontend-5xx alarm fire?`.

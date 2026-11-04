@@ -1,6 +1,6 @@
 ---
 name: start-ticket
-description: Start work on a Linear ticket — read it, check for open blockers, move it to In Progress and assign it to me, then hand over to grill-me. Use when asked to start, pick up, or kick off work on a ticket.
+description: Start work on a Linear ticket — read it, check for open blockers, move it to In Progress and assign it to me right away, then hand over to grill-me. Use when asked to start, pick up, or kick off work on a ticket.
 ---
 
 # Start Ticket Skill
@@ -19,8 +19,9 @@ or branch to create here.
 3. **Don't analyze the codebase here.** Reading the code the ticket touches is `grill-me`'s
    first step. Linear reads (step 1) and the blocker check (step 2) are the only
    investigation this skill does.
-4. Move the ticket to **In Progress** and assign it to the user (Joshua Karstendick) in a
-   single `save_issue` call, passing `assignee: "me"`. Leave out whichever half is already
+4. **Right away,** move the ticket to **In Progress** and assign it to the user (Joshua
+   Karstendick). The status records when work started, so don't defer it to later in the
+   session. Use a single `save_issue` call, passing `assignee: "me"`. Leave out whichever half is already
    true, and skip the call entirely if both are, saying so instead of writing a no-op
    update. If the ticket is assigned to someone else, do not reassign it: still set the
    status, and name the current assignee in your report so the user can decide.

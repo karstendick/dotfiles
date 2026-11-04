@@ -35,7 +35,4 @@ description: Write an implementation spec for a feature or fix — from a confir
    - With a ticket: `<ticket-id>-<short-slug>.md`, lowercased (e.g. `agi-123-retry-backoff.md`).
    - Without a ticket: `<short-slug>.md` (e.g. `solve-replay-animation.md`). Do not invent a ticket
      ID or a placeholder number.
-8. **Plan mode blocks the write.** If the session is still in plan mode, say so and ask the
-   user to approve the plan or leave plan mode (Shift+Tab) first. Don't put the spec in the
-   plan file instead.
-9. After writing, stop and wait. The user approves the spec by running `/implement`, which commits, opens the PR and gets CI green. Don't start implementing before then.
+8. After writing, stop and wait. The user approves the spec by running `/implement`, which commits, opens the PR and gets CI green. Don't start implementing before then.

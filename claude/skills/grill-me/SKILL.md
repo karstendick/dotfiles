@@ -13,10 +13,12 @@ codebase instead. For each question, provide your recommended answer.
 1. **Start from the source.** If there is a ticket, read it fully: images, attachments and
    the actual project field, not just the title. Then read the code it touches. If there is
    no ticket, start from what I've said.
-2. **Ask in rounds.** Each round, ask every question that can be decided now, as one
-   numbered list, so I can answer `1 yes, 2 no — …, 3 …`. Hold back questions that depend on
-   an answer still open; they belong to a later round. Ask in plain text, not through a
-   question tool.
+2. **Ask one question at a time.** Each message asks exactly one question, then stops and
+   waits for my answer. Never batch questions or list the ones still to come. Each answer can
+   change or remove the questions after it, and that's the point of going one at a time.
+   Start with the decision the most other decisions depend on. In the first message, keep
+   what you found to the facts that question needs; later questions bring in their own.
+   Ask in plain text, not through a question tool.
 3. **Only ask about decisions.** Look facts up yourself, using subagents when the search is
    broad, and state what you found rather than asking me to confirm it. A question is worth
    asking only if its answer changes what gets built. Don't ask about logistics, scheduling
@@ -27,16 +29,12 @@ codebase instead. For each question, provide your recommended answer.
    what they break, say what each one breaks.
 5. **Take answers as given.** When I answer, that branch is settled. Don't re-argue it
    unless something you find later contradicts it, and then say what you found.
-6. **Change nothing.** This is a conversation. Don't edit files, create branches, commit, or
-   run anything that changes state outside reading and searching. A question from me during
-   grilling is a question, not a request to act.
+6. **Change nothing in the code.** This is a conversation. Don't edit files, create
+   branches, commit, or run anything that changes state outside reading and searching. A
+   question from me during grilling is a question, not a request to act. The exception is a
+   Linear write I ask for, such as filing a follow-up ticket: do it when I ask, without
+   waiting for the grilling to end.
 7. **Finish with the shared understanding.** When no branch is open, write a short summary:
    each decision and its reason, what is explicitly out of scope, and any question I chose to
-   leave open.
-   - **In plan mode,** present the summary as the plan, through the plan-approval step. My
-     approving it is the confirmation, and it takes the session out of plan mode.
-   - **Otherwise,** ask me to confirm it in conversation.
-
-   Then stop. The plan is the summary, not "write the spec and implement it". The `spec` skill
-   turns the confirmed summary into the spec; don't write the spec here, and don't start
-   implementing.
+   leave open. Ask me to confirm it, then stop. The `spec` skill turns the confirmed summary
+   into the spec; don't write the spec here, and don't start implementing.
