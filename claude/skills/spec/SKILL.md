@@ -35,4 +35,6 @@ description: Write an implementation spec for a feature or fix — from a confir
    - With a ticket: `<ticket-id>-<short-slug>.md`, lowercased (e.g. `agi-123-retry-backoff.md`).
    - Without a ticket: `<short-slug>.md` (e.g. `solve-replay-animation.md`). Do not invent a ticket
      ID or a placeholder number.
-8. After writing, stop and wait. The user approves the spec by running `/implement`, which commits, opens the PR and gets CI green. Don't start implementing before then.
+8. **Open the spec for review** with `code <absolute path to the spec>`. Use the absolute path,
+   since the session is usually in a worktree the user doesn't know the location of.
+9. Then stop and wait. The user approves the spec by running `/implement`, which commits, opens the PR and gets CI green. Don't start implementing before then.

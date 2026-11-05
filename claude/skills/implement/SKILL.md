@@ -7,8 +7,13 @@ model: sonnet
 
 # Implement Skill
 
-Implement an approved spec, open its PR, and get CI green. The user reviews the finished PR
-on GitHub; this skill is not done until every check passes.
+Implement an approved spec, open its PR, and get it mergeable: up to date with `main`, with
+CI green. The user reviews the finished PR on GitHub; this skill is not done until GitHub
+reports the PR `CLEAN`.
+
+**Mergeable is where this skill stops; merging is the user's.** Never merge, approve or
+enable auto-merge on a PR. `git-guard.sh` blocks all three. Bringing the branch up to date
+means merging `main` into this branch (step 7), which leaves the PR open for review.
 
 1. **Check the starting point, and stop if any check fails.**
    - The spec is named in the arguments, or is the one in `docs/specs/` this session wrote.
@@ -46,9 +51,19 @@ on GitHub; this skill is not done until every check passes.
      the flake in the report. Don't rerun the same failure twice.
    - After three fix cycles, stop and report what is still failing and what you tried. Don't
      keep guessing.
-7. **Finish only when every check passes.** Mark the PR ready (`gh pr ready <number>`). If
-   the scope moved during the work, re-run `/pr-description` so the description matches the
-   diff. Then report:
-   - the PR URL and that CI is green,
+7. **Bring the branch up to date with main.** `main` requires branches to be up to date
+   before they merge (strict status checks), and `ci-gate` has to pass on the updated head.
+   Once CI is green, `git fetch origin main`. If `origin/main` isn't an ancestor of `HEAD`
+   (`git merge-base --is-ancestor origin/main HEAD` fails), merge it:
+   `git merge --no-edit origin/main`, resolving any conflicts, then push and go back to
+   step 6. Never rebase; a rebased branch needs a force push, which is blocked. If `main`
+   moves again during three update rounds in a row, stop and report it rather than chasing it.
+8. **Finish only when the PR is mergeable.** Mark the PR ready (`gh pr ready <number>`), then
+   check `gh pr view <number> --json mergeStateStatus`. `CLEAN` means up to date with every
+   required check passing, and only then is the work done. `BEHIND` means `main` moved again:
+   go back to step 7. Anything else (`BLOCKED`, `DIRTY`, `UNSTABLE`), work out why and fix
+   it, or report it. If the scope moved during the work, re-run `/pr-description` so the
+   description matches the diff. Then report:
+   - the PR URL, and that it's up to date with `main` with CI green,
    - anything that differs from the spec, and the gaps you filled,
    - any flake you reran.

@@ -1,6 +1,8 @@
 {
   "attribution": {
-    "pr": ""
+    "pr": "",
+    "commit": "",
+    "sessionUrl": false
   },
   "permissions": {
     "allow": [

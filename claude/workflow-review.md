@@ -51,7 +51,7 @@ All of these go in `~/git/dotfiles/claude/settings.json`.
 | `"fallbackModel": ["sonnet"]` **(done 2026-11-04)** | Bedrock 503 silences | Switches models for the rest of a turn when the primary is overloaded, unavailable, or returns another non-retryable server error. Rate-limit, auth and transport errors never switch. The next message tries Opus again. Subagents use the chain too. `sonnet` resolves through `.envrc`'s pin to `us.anthropic.claude-sonnet-5-5`, which I tested on Bedrock. A switch shows **only an in-session notice**, with no desktop notification and nothing in `/status`. Wider option: `global.anthropic.claude-opus-5-5` (same model, global capacity pool) is ACTIVE on our account, but it can route inference outside US regions, so it's a data-residency call. [model-config](https://code.claude.com/docs/en/model-config.md) |
 | `autoMode.environment` + `/auto-mode-setup` **(done 2026-11-04)** | Classifier blocks on routine commands | My allowlist is checked first: matching commands skip the classifier entirely. The environment list covers everything else by telling the classifier what's inside my boundary; by default that's only the working directory and the repo's remotes. `/auto-mode-setup` drafted it. I then moved `agi-documents-prod` from trusted buckets to sensitive data locations, added Aikido and Linear as trusted domains, and put HubSpot under key services, with the dev/prod credential split, because `api.hubapi.com` serves both portals. Source control stays monorepo-only. Still to do: run `claude auto-mode critique`, and re-run `/insights` later to see whether blocks dropped. Read **only** from user/managed settings. Keep `"$defaults"` in any list I override. `/permissions` → *Recently blocked* → `r` approves one after the fact. [auto-mode-config](https://code.claude.com/docs/en/auto-mode-config.md) |
 | `"promptCacheTtl": "1h"` **(done 2026-11-04)** | Expensive, slow resumes after a 5–60 min break | Works on Bedrock with Opus 5.5 (measured: the same 38.5k-token write cost $0.19 at 5m, $0.31 at 1h). Writes cost 2x base instead of 1.25x; cache reads are 0.1x. **Break-even is about one 5–60 min break per session**: the extra cost is ~0.75x × final context, and each break it survives saves ~1.15x × context. Multi-session work makes those breaks the norm. Subagents stay on 5m. `idleCompaction` (on by default) compacts a 200k+ token conversation idle ~54 min before the cache expires. If a compacted spec session loses detail I needed, set it to `false`. |
-| `"attribution": {"pr": ""}` **(done 2026-11-04)** | PR footer | Replaces the "no footer" rule that lived in `/pr-description` and memory. `commit` is unset, so commits keep the default `Co-Authored-By` trailer. |
+| `"attribution": {"pr": "", "commit": "", "sessionUrl": false}` **(done 2026-11-04)** | Claude attribution on my work | Only my name goes on my PRs and commits, because I'm responsible for what ships. This turns off the PR footer, the commit `Co-Authored-By` trailer (which squash merges carried onto `main`), and the claude.ai session link in commits. No setting reaches text Claude writes, such as PR thread replies; `loop.md` says to write those as me, which covers the one place it came up. |
 
 Also worth knowing: `/insights` now estimates how many permission prompts auto mode could
 have absorbed. Run it again after tuning to see whether it helped.
@@ -266,14 +266,23 @@ baseline above). If Sonnet's share hasn't grown, the split still isn't happening
 
 **Claude commits, pushes and opens the PR; I review the finished PR (done 2026-11-04).**
 Running `/implement <spec>` is how I approve a spec, and it ships it. It does the whole stretch:
-1. Checks it's on the ticket's feature branch with a clean tree.
+1. Checks it's in a worktree of its own, not `main`, with a clean tree, and runs
+   `pnpm install`.
 2. Implements the spec and nothing else.
 3. Commits as it goes.
-4. Runs `lint:full`, the tests and, for UI changes, `e2e` locally.
+4. Runs `lint:full` and the affected tests locally. e2e is left to CI.
 5. Pushes and runs `/pr-description --draft`.
 6. Fixes CI until every check is green. A failure unrelated to the diff gets one rerun;
    it stops after three fix cycles.
-7. Only then marks the PR ready.
+7. Brings the branch up to date with `main` by merging `origin/main`, never rebasing, and
+   goes back to step 6.
+8. Marks the PR ready, and is done only when GitHub reports it `CLEAN`.
+
+**Why "up to date" is part of done (2026-11-04).** `main`'s ruleset sets
+`strict_required_status_checks_policy: true`, so a PR has to be up to date with `main`,
+with `ci-gate` passing on that head, before it can merge. No approving review is required,
+so `mergeStateStatus: CLEAN` is exactly "ready to merge". PR #597, the first from this
+workflow, arrived green but `BEHIND`.
 
 A draft becoming ready is my signal that it's done. It's also when managed Code Review runs
 on *Once after PR creation*, since that setting skips drafts. CI median is ~5 min, with the
@@ -289,6 +298,10 @@ What changed:
   so commit messages can't trigger it. I tested it against 28 cases and live in this session.
   It reads the branch from `git -C <dir>` or the session's directory, not from a `cd` inside
   the command.
+- **Only I merge (2026-11-04).** `git-guard.sh` also blocks merging, approving and
+  auto-merging a PR: `gh pr merge` (including `--auto`), `gh pr review --approve`, and the
+  same through `gh api` (the GraphQL merge and auto-merge mutations, the REST merge endpoint,
+  approving reviews). `/implement` and `loop.md` say so too.
 
 **After the PR:** I review on GitHub, then bare `/loop` in that session, which stays open in agent view until the
 PR merges, works through my comments and CI. Optional extras: managed Code
@@ -300,13 +313,25 @@ watch loop, but its evaluator is unverified on Bedrock.
   nothing else is pending. On a PR waiting for my review, that's out-of-scope change.
 - **What it does instead:** `claude/loop.md` in dotfiles, linked from `~/.claude/loop.md` and
   added to `install.sh`, tends the branch's PR and nothing else:
-  1. Stop when the PR is merged or closed.
+  1. Stop when there's nothing left to do: the PR is merged or closed, or it's `CLEAN` with
+     every comment addressed and replied to and none held for me. I run `/loop` again after
+     my next review.
   2. Address each new review comment: commit, push, and **reply on the thread** with what
      changed, or with the answer to a question. If a comment asks for something outside the
-     spec, or Claude disagrees, ask me instead.
+     spec, or Claude disagrees, **hold it**: reply "Holding: …" on the thread, ask me in the
+     session, and push nothing while it's held.
   3. Fix red CI, rerunning a failure unrelated to the diff once.
-  4. Merge `origin/main` on a conflict. Never rebase, which would need a blocked force push.
-  5. Otherwise do nothing and wait longer.
+  4. Update the branch with `main` when the PR is `BEHIND` or `DIRTY`, so it stays
+     mergeable while it waits for review. Not while auto-merge is armed with a thread still
+     unresolved. Never rebase, which would need a blocked force push.
+
+**PR #597 merged past my review comment (2026-11-04).** I'd armed auto-merge, and GitHub
+records it under my account; no Claude session did. The loop had decided my comment needed
+me, then pushed a `main` update anyway without replying on the thread. That made the PR
+mergeable, and auto-merge merged it. The fixes are the holding rule and auto-merge check
+above, plus the merge guard in `git-guard.sh`. The structural fix is AGI-708: require review
+conversations to be resolved before anything merges into `main`.
+  5. Otherwise wait, while CI runs or a comment is held for me, and do nothing else.
 - **Scope:** it only changes bare `/loop` (and `/loop 15m`). `/loop <prompt>` ignores it, and
   a project's own `.claude/loop.md` overrides it.
 
@@ -319,9 +344,13 @@ watch loop, but its evaluator is unverified on Bedrock.
    on those two threads with the commit. It answers the question on its thread. CI starts,
    so it waits about 4 minutes.
 4. **Iteration 2:** a Playwright test failed. If the diff caused it, Claude fixes it and
-   pushes; if not, it reruns the job once. Once CI is green, it waits about 30 minutes.
-5. I approve and merge. The next iteration sees the PR is merged, stops the loop, and
-   reports. I delete the session from agent view with `Ctrl+X` twice.
+   pushes; if not, it reruns the job once.
+5. **Iteration 3:** CI is green, the branch is up to date with `main`, and all three threads
+   have replies, so the PR is `CLEAN` with nothing open. The loop stops itself and reports
+   that the PR is ready for me.
+6. I re-review. If I leave more comments, I run `/loop` again. If not, I merge, then delete
+   the session from agent view with `Ctrl+X` twice. If `main` moved in between and the PR
+   shows `BEHIND`, `/loop` once more, or GitHub's "Update branch" button, catches it up.
 
 **How it runs:**
 - **Timing:** Claude picks the wait itself, from 1 minute to 1 hour, and prints each delay
@@ -569,15 +598,17 @@ How a ticket goes from now on.
    question is waiting, so I can work other tickets in between.
 4. **Confirm the summary:** Claude summarizes what we decided, and I confirm it in
    conversation.
-5. **Spec:** `/spec` writes the decision record, and Claude moves into its own worktree. I
-   read it to check it matches what we decided. It should have no Open Questions beyond any I chose to leave open.
-6. **Ship:** run `/implement`, which is my approval of the spec. Claude commits, opens a draft PR, and
-   fixes CI until it's green, then marks the PR ready. I detach and move on.
+5. **Spec:** `/spec` writes the decision record, Claude moves into its own worktree, and the
+   spec opens in VS Code (`code`). I read it to check it matches what we decided. It should have no Open Questions beyond any I chose to leave open.
+6. **Ship:** run `/implement`, which is my approval of the spec. Claude commits, opens a draft PR,
+   fixes CI until it's green, and keeps the branch up to date with `main`. Then it marks the
+   PR ready, and it's done when GitHub reports the PR mergeable. I detach and move on.
 7. **Review on GitHub:** when the PR is ready (with managed Code Review's comments, if the
    pilot is on), I review line by line and leave comments.
 8. **Address feedback:** attach to the session from agent view (its row shows the PR's `#N`) and
    run bare `/loop`, then detach. It fixes what my comments ask for, replies on each thread,
-   fixes CI, and stops itself once the PR merges. Repeat 7–8 until it's ready to merge.
+   fixes CI, and stops itself once the PR is `CLEAN` with every comment handled. Repeat 7–8
+   until it's ready to merge.
 9. **Merge and clean up:** merge on GitHub. In agent view, press `Ctrl+X` twice on the
    session's row, which deletes the session and its worktree. Or let finished sessions
    collect under *Completed* and clear them all at once with `Ctrl+X` on that group's header.
