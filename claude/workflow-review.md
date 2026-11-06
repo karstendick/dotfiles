@@ -213,8 +213,17 @@ by hand.
 - **How:** `/implement` has `model: sonnet` in its frontmatter. A skill's model applies for
   the rest of the turn that invokes it ([docs](https://code.claude.com/docs/en/skills.md)),
   and `/implement` runs mostly as one long turn. Grilling and `/spec` stay on Opus.
-- **Unverified:** once the background CI watch finishes, Claude may continue in a new turn,
-  back on Opus. If Cost Explorer shows little Sonnet, that's why.
+- **The CI stretch runs as a Sonnet subagent (2026-11-05).** On the first full day, Sonnet
+  was only 18% of my spend. When a background CI watch finishes, Claude continues in a new
+  turn on the session's model, so every CI-fixing round ran on Opus. `/implement` now hands
+  watching CI, fixing it, updating with `main` and marking ready to `ci-green`, a skill with
+  `context: fork` and `model: sonnet` that `/implement` waits on. That keeps the whole
+  stretch in one turn, on Sonnet. A subagent can't see the conversation, so it gets the PR
+  number and the spec's path, and stops to report if a fix needs a decision.
+- **`/loop` iterations run on Sonnet too.** `loop.md` now just runs the `tend-pr` skill
+  (`model: sonnet`), and each iteration is one turn. `tend-pr` runs in the session rather
+  than as a subagent, so a held comment can still ask me there. My reply is a new turn, on
+  Opus.
 - **Costs:** each model has its own prompt cache, so the first Sonnet turn is uncached. And
   when implementation hits something the plan didn't foresee, Sonnet makes the call. Tests,
   CI and review on GitHub are the backstop.
@@ -272,11 +281,11 @@ Running `/implement <spec>` is how I approve a spec, and it ships it. It does th
 3. Commits as it goes.
 4. Runs `lint:full` and the affected tests locally. e2e is left to CI.
 5. Pushes and runs `/pr-description --draft`.
-6. Fixes CI until every check is green. A failure unrelated to the diff gets one rerun;
-   it stops after three fix cycles.
-7. Brings the branch up to date with `main` by merging `origin/main`, never rebasing, and
-   goes back to step 6.
-8. Marks the PR ready, and is done only when GitHub reports it `CLEAN`.
+6. Hands the rest to `ci-green`, a Sonnet subagent: it fixes CI until every check is green
+   (one rerun for a failure unrelated to the diff, three fix cycles at most), brings the
+   branch up to date with `main` by merging `origin/main` and never rebasing, marks the PR
+   ready, and is done only when GitHub reports it `CLEAN`.
+7. Reports what it shipped.
 
 **Why "up to date" is part of done (2026-11-04).** `main`'s ruleset sets
 `strict_required_status_checks_policy: true`, so a PR has to be up to date with `main`,
@@ -312,7 +321,8 @@ watch loop, but its evaluator is unverified on Bedrock.
 - **Why:** the built-in prompt runs "cleanup passes such as bug hunts or simplification" when
   nothing else is pending. On a PR waiting for my review, that's out-of-scope change.
 - **What it does instead:** `claude/loop.md` in dotfiles, linked from `~/.claude/loop.md` and
-  added to `install.sh`, tends the branch's PR and nothing else:
+  added to `install.sh`, runs the `tend-pr` skill (on Sonnet since 2026-11-05), which tends
+  the branch's PR and nothing else:
   1. Stop when there's nothing left to do: the PR is merged or closed, or it's `CLEAN` with
      every comment addressed and replied to and none held for me. I run `/loop` again after
      my next review.
@@ -543,7 +553,9 @@ Spikes to settle the **(unverified)** points, each a few minutes:
    and does approving it from an attached session switch `opusplan` to Sonnet as it does in
    a foreground session? _Resolved: moot. Plan mode left the ticket workflow (§3)._
    Replaced by: does `/implement`'s `model: sonnet` cover the CI-fixing turns, or only the
-   first one? Check the session's model use, or Cost Explorer. (Phase 3)
+   first one? _Resolved 2026-11-05: only the first, since Sonnet was 18% of spend. Fixed by
+   running the CI stretch as the `ci-green` Sonnet subagent and `/loop` through `tend-pr`
+   (§3)._ New check: after a week, does Sonnet's share of my spend pass ~50%? (Phase 3)
 9. Does the session move into its worktree before `/spec` writes, so the spec lands on the
    PR branch rather than in the primary checkout? (Phase 4)
 10. Does a background session see `.envrc`'s environment (Bedrock, AWS profile, app secrets)?

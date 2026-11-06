@@ -13,7 +13,7 @@ reports the PR `CLEAN`.
 
 **Mergeable is where this skill stops; merging is the user's.** Never merge, approve or
 enable auto-merge on a PR. `git-guard.sh` blocks all three. Bringing the branch up to date
-means merging `main` into this branch (step 7), which leaves the PR open for review.
+means merging `main` into this branch (`ci-green` step 2), which leaves the PR open for review.
 
 1. **Check the starting point, and stop if any check fails.**
    - The spec is named in the arguments, or is the one in `docs/specs/` this session wrote.
@@ -42,28 +42,16 @@ means merging `main` into this branch (step 7), which leaves the PR open for rev
 5. **Open the PR as a draft.** Push with `git push -u origin HEAD`, then run `/pr-description
    --draft`. If the change can't deploy with zero downtime, the description must say so and
    give the plan, per the repo's CLAUDE.md.
-6. **Get CI green.** Run `gh pr checks <number> --watch` in the background, since CI can
-   outlast a foreground command's limit, and wait for it to finish. On a failure:
-   - Read the failing job's log (`gh run view <run-id> --log-failed`) and fix the cause.
-     Commit, push, and watch again.
-   - If the failure has nothing to do with this diff, such as a known-flaky e2e test or a
-     registry timeout, rerun the failed jobs once (`gh run rerun <run-id> --failed`) and record
-     the flake in the report. Don't rerun the same failure twice.
-   - After three fix cycles, stop and report what is still failing and what you tried. Don't
-     keep guessing.
-7. **Bring the branch up to date with main.** `main` requires branches to be up to date
-   before they merge (strict status checks), and `ci-gate` has to pass on the updated head.
-   Once CI is green, `git fetch origin main`. If `origin/main` isn't an ancestor of `HEAD`
-   (`git merge-base --is-ancestor origin/main HEAD` fails), merge it:
-   `git merge --no-edit origin/main`, resolving any conflicts, then push and go back to
-   step 6. Never rebase; a rebased branch needs a force push, which is blocked. If `main`
-   moves again during three update rounds in a row, stop and report it rather than chasing it.
-8. **Finish only when the PR is mergeable.** Mark the PR ready (`gh pr ready <number>`), then
-   check `gh pr view <number> --json mergeStateStatus`. `CLEAN` means up to date with every
-   required check passing, and only then is the work done. `BEHIND` means `main` moved again:
-   go back to step 7. Anything else (`BLOCKED`, `DIRTY`, `UNSTABLE`), work out why and fix
-   it, or report it. If the scope moved during the work, re-run `/pr-description` so the
+6. **Get the PR mergeable with the `ci-green` skill.** Invoke it with the PR number and the
+   spec's absolute path, and wait for its report. It runs as a Sonnet subagent: it watches CI
+   and fixes failures, brings the branch up to date with `main`, marks the PR ready, and
+   finishes only when GitHub reports the PR `CLEAN`. Running it as one subagent call keeps
+   that whole stretch on Sonnet and in this turn, instead of new turns on the session's
+   model each time CI finishes. If it stops on something that needs a decision, take that to
+   the user rather than working around it.
+7. **Report.** If the scope moved during the work, re-run `/pr-description` so the
    description matches the diff. Then report:
-   - the PR URL, and that it's up to date with `main` with CI green,
+   - the PR URL and its final state from `ci-green` (`CLEAN` means up to date with `main` and
+     CI green),
    - anything that differs from the spec, and the gaps you filled,
-   - any flake you reran.
+   - any CI fix or flake `ci-green` reported, and anything it stopped on.
