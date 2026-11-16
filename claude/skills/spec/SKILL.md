@@ -35,6 +35,21 @@ description: Write an implementation spec for a feature or fix — from a confir
    - With a ticket: `<ticket-id>-<short-slug>.md`, lowercased (e.g. `agi-123-retry-backoff.md`).
    - Without a ticket: `<short-slug>.md` (e.g. `solve-replay-animation.md`). Do not invent a ticket
      ID or a placeholder number.
-8. **Open the spec for review** with `code <absolute path to the spec>`. Use the absolute path,
-   since the session is usually in a worktree the user doesn't know the location of.
-9. Then stop and wait. The user approves the spec by running `/implement`, which commits, opens the PR and gets CI green. Don't start implementing before then.
+8. **Publish the spec for review on GitHub.** The user reviews it there, as they review code,
+   not in an editor.
+   - The session must be in a worktree of its own on a branch that isn't `main`. Writing the
+     spec is normally the first edit, which moves the session into one. If it's still in the
+     primary checkout, move into a new worktree and write the spec there.
+   - Commit only the spec (`git add <spec path>`, never `-A`) and push with
+     `git push -u origin HEAD`.
+   - Open a draft PR with `gh pr create --draft`. Title it the way the repo titles its PRs
+     (check `gh pr list --state merged --limit 5`), e.g. `[AGI-123] <ticket title>`. In the
+     body, say that the PR holds only the spec for now and that the implementation follows
+     once the spec is approved, then link the spec.
+   - Give the user two links: the spec in the PR's **Files changed** tab
+     (`<PR URL>/files`), where they leave inline comments, and the rendered file
+     (`<repo URL>/blob/<branch>/<spec path>`).
+9. Then stop and wait. If the user leaves review comments on the spec, update it, commit,
+   push to the same branch, and reply on each thread. Never resolve a thread; the reviewer
+   does that. The user approves the spec by running `/implement`, which builds the
+   implementation on this branch and PR and gets CI green. Don't start implementing before then.

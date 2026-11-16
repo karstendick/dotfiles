@@ -19,11 +19,14 @@ means merging `main` into this branch (`ci-green` step 2), which leaves the PR o
    - The spec is named in the arguments, or is the one in `docs/specs/` this session wrote.
      Being run is the user's approval of that spec; don't ask for it again.
    - The session is in a worktree of its own on a branch that isn't `main`. That's normally
-     the one Claude moved into when `/spec` wrote the spec. If it's still in the primary
-     checkout, move into a new worktree before editing anything. The `git-guard.sh` hook
-     refuses commits on `main`; don't work around it.
-   - `git status` is clean apart from the spec itself. If other uncommitted changes are there,
-     ask before touching them.
+     the one `/spec` committed the spec on, with a draft PR already open for it. If it's
+     still in the primary checkout, move into a new worktree before editing anything. The
+     `git-guard.sh` hook refuses commits on `main`; don't work around it.
+   - `git status` is clean, or holds only the spec if `/spec` didn't commit it. If other
+     uncommitted changes are there, ask before touching them.
+   - If the spec's PR has inline review comments
+     (`gh api repos/{owner}/{repo}/pulls/<number>/comments`) that the spec doesn't reflect
+     yet, stop and ask rather than implementing an outdated spec.
    - Dependencies are installed. A fresh worktree has no `node_modules`, so run `pnpm install`
      at the worktree root before building or testing anything.
 2. **Implement the spec and nothing else.** Leave deferred items and Open Questions alone.
@@ -40,7 +43,9 @@ means merging `main` into this branch (`ci-green` step 2), which leaves the PR o
    any server already listening there, so in a worktree it can test another session's code,
    or the user's own `pnpm dev`, and pass. CI's `e2e` job is the check; step 6 waits for it.
 5. **Open the PR as a draft.** Push with `git push -u origin HEAD`, then run `/pr-description
-   --draft`. If the change can't deploy with zero downtime, the description must say so and
+   --draft`. If `/spec` already opened a draft PR for this branch, that updates it: its
+   description said the PR held only the spec, and now it describes the implementation.
+   If the change can't deploy with zero downtime, the description must say so and
    give the plan, per the repo's CLAUDE.md.
 6. **Get the PR mergeable with the `ci-green` skill.** Invoke it with the PR number and the
    spec's absolute path, and wait for its report. It runs as a Sonnet subagent: it watches CI
