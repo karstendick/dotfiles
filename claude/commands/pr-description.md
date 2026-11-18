@@ -20,7 +20,7 @@ Use the argument as `$ARGUMENTS` if provided.
 
 1. **Identify the PR** — resolve the PR number from the argument or current branch.
 
-   If `gh pr view` reports no PR for the branch, the PR does not exist yet: **create it** in step 5
+   If `gh pr view` reports no PR for the branch, the PR does not exist yet: **create it** in step 6
    rather than stopping. A branch whose work is already committed but unopened is a normal path for
    this command, not an error, so don't ask for confirmation first.
 
@@ -32,7 +32,18 @@ Use the argument as `$ARGUMENTS` if provided.
 
    If the diff is too large for GitHub's API, use local git commands instead.
 
-3. **Write the description** — produce a markdown body with these sections:
+   From the stat, note whether the branch changes a screen: in this monorepo, files under
+   `apps/agi-os/src/app/` or `apps/agi-os/src/components/` other than tests.
+
+3. **Screenshots, when the branch changes what a user sees.** If it adds or visibly changes a
+   screen, dialog, form, navigation or what a user can do, and the PR has no Screenshots section
+   yet (or the screens changed since its images were taken), invoke the repo's `pr-screenshots`
+   skill (`.claude/skills/pr-screenshots/`). It captures the screens with made-up data, commits
+   the images beside the spec, and says how to link them. Skip it for a change nobody can see,
+   and say why in the Screenshots section. In a repo without that skill, write the section from
+   what the user provides, or leave it out.
+
+4. **Write the description** — produce a markdown body with these sections:
 
    ```
    ## Summary
@@ -40,6 +51,10 @@ Use the argument as `$ARGUMENTS` if provided.
 
    ## What changed
    Grouped by theme/area. Use bold headers for groupings. Bullet points for specifics.
+
+   ## Screenshots
+   Only when the branch changes what a user sees (step 3): recordings inline, each screenshot
+   in a <details> block. Or one line saying why there are none.
 
    ## Testing
    How to verify this works — commands to run, what to look for.
@@ -56,7 +71,7 @@ Use the argument as `$ARGUMENTS` if provided.
    - Group related changes; don't just list commits.
    - If the diff is mostly mechanical (formatting, renames), say so explicitly and point reviewers to the substantive changes.
 
-4. **Derive the title** — a concise title from the ticket and commits:
+5. **Derive the title** — a concise title from the ticket and commits:
    - Format: `[TICKET-ID] Short description` when the work has a Linear/Jira ticket. Look for
      the ID, in this order: the ticket the conversation is about, a spec on the branch named
      `docs/specs/<ticket-id>-….md`, then the branch name (e.g. `agi-69` → `AGI-69`). Branches
@@ -65,7 +80,7 @@ Use the argument as `$ARGUMENTS` if provided.
      in Linear.
    - Otherwise: a plain short title (under 70 characters)
 
-5. **Upload** — write the body to `/tmp/pr-<number>-body.md`, or `/tmp/pr-<branch>-body.md` when
+6. **Upload** — write the body to `/tmp/pr-<number>-body.md`, or `/tmp/pr-<branch>-body.md` when
    there is no number yet. Then, depending on what step 1 found:
 
    **PR exists** — edit it in place:
@@ -82,9 +97,11 @@ Use the argument as `$ARGUMENTS` if provided.
    If the arguments include `--draft`, as `/implement` passes them, add `--draft` to
    `gh pr create`.
 
-   This command describes what is committed; it doesn't commit. `/implement` commits before it
-   runs these steps. Uncommitted changes are not a reason to hold the PR: open it from what is
-   already committed, and mention the uncommitted files in the report.
+   This command describes what is committed; it doesn't commit, apart from the screenshots
+   step 3 commits on their own. `/implement` commits before it runs these steps. Uncommitted
+   changes are not a reason to hold the PR: open it from what is already committed, and
+   mention the uncommitted files in the report.
 
-6. **Report** — show the user the PR URL when done, and say which path you took: created a new PR,
-   or updated an existing one.
+7. **Report** — show the user the PR URL when done, and say which path you took: created a new PR,
+   or updated an existing one. If step 3 captured screenshots, say which, and ask the user to
+   check the description renders them: they can't be checked from the command line.
